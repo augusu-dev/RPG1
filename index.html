@@ -254,7 +254,7 @@ function BasketballModule(x, z) {
   box(0.08, 3.1, 10, 0x9aa3b0, 14.15, 1.55, 4, g);
   box(0.08, 3.1, 10, 0x9aa3b0, -14.15, 1.55, 4, g);
   bench(g, 0, 10.6, 0); bench(g, 6, 10.6, 0);
-  BALL = mesh(new THREE.SphereGeometry(0.22, 12, 12), 0xff6610, 2, 0.22, 1, scene);
+  BALL = mesh(new THREE.SphereGeometry(0.22, 12, 12), 0xff6610, 1.1, 0.22, -6.2, scene);
   BALL.userData.v = new THREE.Vector3();
   scene.add(g);
   BENCH.push([x, z + 10.6], [x + 6, z + 10.6]);
