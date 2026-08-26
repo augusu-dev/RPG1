@@ -5,61 +5,93 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>ANIME GAUNTLET LOOP STUDIO</title>
 <style>
-html,body{margin:0;overflow:hidden;background:#14080c;font-family:"Segoe UI","Hiragino Sans",sans-serif;color:#fff}
+:root{
+  --bg:rgba(16,18,22,.88); --line:rgba(255,255,255,.14); --text:#f4f1ea; --muted:#c8c2b6;
+  --accent:#d4b483; --on:#3d6b5c; --danger:#c45c5c; --radius:10px;
+}
+html,body{margin:0;overflow:hidden;background:#12141a;color:var(--text);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Segoe UI",sans-serif}
 #c{display:block;width:100%;height:100%;touch-action:none}
-#mini{position:fixed;left:10px;top:10px;width:140px;height:140px;border:2px solid #fff7;border-radius:10px;z-index:6;background:#1a2230}
-#bar{position:fixed;top:0;left:160px;right:272px;height:40px;display:flex;gap:8px;align-items:center;padding:0 10px;background:#000a;z-index:5;font-size:12px}
-#dir{position:fixed;right:0;top:0;bottom:118px;width:264px;background:#140a12f0;padding:10px;z-index:5;overflow:auto;font-size:11px}
-#dia{position:fixed;left:0;right:264px;bottom:0;height:118px;background:#140a12f0;padding:8px 12px;z-index:5;font-size:12px}
-#hint{position:fixed;left:160px;bottom:122px;font-size:11px;opacity:.75;z-index:5;text-shadow:0 1px 2px #000}
-#fl{display:none;position:fixed;left:160px;top:46px;z-index:6;background:#140a12f0;padding:8px;border-radius:6px;font-size:11px}
-button,select,input{background:#2a1822;color:#fff;border:1px solid #fff3;border-radius:4px;padding:4px 7px;font-size:11px}
-button:hover{background:#ff5a7a}
-h3{margin:0 0 6px;font-size:12px;letter-spacing:1px;color:#ffb4c8}
-#rec{color:#ff3344;font-weight:700;animation:blink 1s infinite}
-@keyframes blink{50%{opacity:.25}}
-.slot{display:flex;gap:4px;align-items:center;margin:3px 0}
-#log{height:46px;overflow:auto;opacity:.85;margin-top:4px;line-height:1.4}
-#prompt,#line{width:100%;margin:4px 0}
-#casts span{min-width:52px}
+#ui{position:fixed;inset:0;pointer-events:none;z-index:5}
+#ui > *{pointer-events:auto}
+#bar{position:absolute;top:12px;left:158px;right:292px;min-height:48px;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;
+  padding:8px 12px;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);backdrop-filter:blur(10px)}
+#bar .brand{font-size:13px;font-weight:650;letter-spacing:.04em;margin-right:6px;white-space:nowrap}
+#bar .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+#cams{display:flex;gap:4px;flex-wrap:wrap}
+#mini{position:absolute;left:12px;top:12px;width:132px;height:132px;border:1px solid var(--line);border-radius:var(--radius);background:#1a2230}
+#dir{position:absolute;right:12px;top:12px;bottom:132px;width:268px;background:var(--bg);border:1px solid var(--line);
+  border-radius:var(--radius);padding:14px;overflow:auto;backdrop-filter:blur(10px)}
+#dia{position:absolute;left:158px;right:292px;bottom:12px;background:var(--bg);border:1px solid var(--line);
+  border-radius:var(--radius);padding:12px 14px;backdrop-filter:blur(10px)}
+#hint{position:absolute;left:158px;right:292px;bottom:118px;font-size:12px;color:var(--muted);text-shadow:0 1px 2px #000;pointer-events:none;line-height:1.5}
+#hud{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);font-size:15px;letter-spacing:.04em;
+  padding:8px 16px;border-radius:8px;background:rgba(16,18,22,.72);border:1px solid var(--line);opacity:0;transition:opacity .15s;pointer-events:none}
+#fl{display:none;position:absolute;left:158px;top:72px;z-index:6;background:var(--bg);border:1px solid var(--line);
+  padding:12px;border-radius:var(--radius);min-width:220px}
+button,select,input{background:#2a2f38;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 11px;font-size:13px;font-family:inherit}
+button{cursor:pointer}
+button:hover,button:focus-visible{border-color:var(--accent);outline:none}
+button.on{background:var(--on);border-color:#8fbfae}
+#dn.on{background:#2c3558;border-color:#8aa0d8}
+h3{margin:0 0 10px;font-size:12px;font-weight:650;letter-spacing:.08em;color:var(--accent)}
+.help{margin:0 0 10px;font-size:12px;color:var(--muted);line-height:1.55}
+#rec{color:var(--danger);font-size:12px;margin-left:auto;white-space:nowrap}
+.slot{display:grid;grid-template-columns:18px 64px 1fr;gap:8px;align-items:center;margin:6px 0}
+#log{height:44px;overflow:auto;opacity:.9;margin-top:6px;line-height:1.45;font-size:12px;color:var(--muted)}
+#prompt,#line{width:100%;margin:6px 0;box-sizing:border-box}
+.row{display:flex;gap:8px;align-items:center}
+.row > input{flex:1}
+label.fov{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+#fl button{display:block;width:100%;margin:4px 0;text-align:left}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="ui">
 <canvas id="mini" width="140" height="140"></canvas>
 <div id="bar">
-  <b>CAMERA STUDIO</b>
-  <button id="mF">Follow</button>
-  <button id="mR">Free</button>
-  <button id="mT">Top</button>
-  <button id="mS">Skyline</button>
-  <label>FOV <input id="fov" type="range" min="30" max="90" value="52"/></label>
-  <span id="rec">● REC</span>
-  <button id="dn">昼夜</button>
+  <span class="brand">撮影スタジオ</span>
+  <span class="sep"></span>
+  <div id="cams">
+    <button type="button" id="mF" title="キャラクターを追います（C）">追従</button>
+    <button type="button" id="mR" title="視点だけ自由に回せます">自由</button>
+    <button type="button" id="mT" title="真上からロット全体を見ます">俯瞰</button>
+    <button type="button" id="mS" title="夕景の全景です">夕景</button>
+  </div>
+  <label class="fov">画角 <input id="fov" type="range" min="30" max="90" value="52"/></label>
+  <button type="button" id="dn" title="夕景と夜景を切り替えます">夜景にする</button>
+  <span id="rec">収録中</span>
 </div>
 <div id="fl">
-  <b>ELEVATOR</b>
-  <button data-f="1">1F ロビー</button>
-  <button data-f="20">20F</button>
-  <button data-f="40">40F</button>
-  <button data-f="60">60F</button>
-  <button data-f="99">RF 展望</button>
-  <button id="leave">出る</button>
+  <h3>エレベータ</h3>
+  <p class="help">行きたい階を選んでください。建物を出ることもできます。</p>
+  <button type="button" data-f="1">1階　ロビー</button>
+  <button type="button" data-f="20">20階</button>
+  <button type="button" data-f="40">40階</button>
+  <button type="button" data-f="60">60階</button>
+  <button type="button" data-f="99">屋上　展望</button>
+  <button type="button" id="leave">建物を出る</button>
 </div>
 <div id="dir">
-  <h3>DIRECTOR · CAST MAX 5</h3>
+  <h3>演出</h3>
+  <p class="help">出演者は何人でも選べます。下の欄に日本語で指示を書けます。</p>
   <div id="casts"></div>
-  <input id="prompt" placeholder="全員で座る / 展望台 / ループを歩く"/>
-  <button id="goP">ACTION</button>
+  <input id="prompt" placeholder="例：全員で座る、外周を歩く、展望台へ"/>
+  <button type="button" id="goP">指示する</button>
 </div>
 <div id="dia">
-  <h3>DIALOGUE STUDIO</h3>
-  <select id="spk"></select>
-  <input id="line" placeholder="セリフを入力"/>
-  <button id="say">喋らせる</button>
+  <h3>台詞</h3>
+  <div class="row">
+    <select id="spk" aria-label="話す人"></select>
+    <input id="line" placeholder="台詞を入力して、話すを押してください"/>
+    <button type="button" id="say">話す</button>
+  </div>
   <div id="log"></div>
 </div>
-<div id="hint">WASD | Shift | 右ドラッグ | ホイール | C カメラ | E 座る/ドア/エレベータ/自販機/ボール | 南=平地 北=高層</div>
+<div id="hint">移動は WASD、走るは Shift、視点は右ドラッグ、距離はホイールです。C でカメラ、E で座る・入室・エレベータです。マップ上は自由に歩けます。入室はドアの前で E です。</div>
+<div id="hud"></div>
+</div>
 <script>
 window.KITS = {"street_lamp": {"sit": false, "parts": [{"t": "cyl", "name": "footing", "p": [0, 0.04, 0], "c": 9079444, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.22, "r2": 0.22, "h": 0.08, "seg": 10}, {"t": "cyl", "name": "base_collar", "p": [0, 0.14, 0], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.11, "r2": 0.13, "h": 0.14, "seg": 8}, {"t": "cyl", "name": "pole_lower", "p": [0, 1.85, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.065, "r2": 0.065, "h": 3.2, "seg": 8}, {"t": "cyl", "name": "mid_ring", "p": [0, 3.48, 0], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.085, "r2": 0.085, "h": 0.07, "seg": 8}, {"t": "cyl", "name": "pole_upper", "p": [0, 4.2, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.05, "r2": 0.048, "h": 1.35, "seg": 8}, {"t": "box", "name": "arm_bracket", "p": [0, 4.9, 0.02], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.14, 0.12, 0.16], "seg": 8}, {"t": "box", "name": "arm", "p": [0, 4.9, 0.55], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.055, 0.055, 1.05], "seg": 8}, {"t": "box", "name": "conduit", "p": [0.07, 4.62, 0.2], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.02, 0.45, 0.02], "seg": 8}, {"t": "box", "name": "housing", "p": [0, 4.82, 1.12], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.32, 0.13, 0.42], "seg": 8}, {"t": "box", "name": "visor", "p": [0, 4.91, 1.12], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.36, 0.03, 0.46], "seg": 8}, {"t": "box", "name": "lens", "p": [0, 4.74, 1.12], "c": 16771232, "e": 16764006, "rx": 0, "ry": 0, "rz": 0, "s": [0.24, 0.04, 0.32], "seg": 8}, {"t": "cyl", "name": "bulb", "p": [0, 4.76, 1.12], "c": 16774338, "e": 16769160, "rx": 0, "ry": 0, "rz": 0, "r": 0.05, "r2": 0.05, "h": 0.06, "seg": 8}, {"t": "cyl", "name": "bolt_0", "p": [0.13815914910043275, 0.09, 0.05841275134629757], "c": 2763312, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.02, "seg": 6}, {"t": "cyl", "name": "bolt_1", "p": [-0.05841275134629755, 0.09, 0.13815914910043275], "c": 2763312, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.02, "seg": 6}, {"t": "cyl", "name": "bolt_2", "p": [-0.13815914910043278, 0.09, -0.058412751346297545], "c": 2763312, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.02, "seg": 6}, {"t": "cyl", "name": "bolt_3", "p": [0.058412751346297594, 0.09, -0.13815914910043275], "c": 2763312, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.02, "seg": 6}]}, "chair": {"sit": true, "sitOffset": [0, 0.52, 0.02], "parts": [{"t": "cyl", "name": "leg_-1-1", "p": [-0.18, 0.23, -0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.022, "r2": 0.02, "h": 0.46, "seg": 6}, {"t": "cyl", "name": "leg_1-1", "p": [0.18, 0.23, -0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.022, "r2": 0.02, "h": 0.46, "seg": 6}, {"t": "cyl", "name": "leg_-11", "p": [-0.18, 0.23, 0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.022, "r2": 0.02, "h": 0.46, "seg": 6}, {"t": "cyl", "name": "leg_11", "p": [0.18, 0.23, 0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.022, "r2": 0.02, "h": 0.46, "seg": 6}, {"t": "box", "name": "stretcher_w", "p": [0, 0.14, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.34, 0.02, 0.02], "seg": 8}, {"t": "box", "name": "stretcher_d", "p": [0, 0.14, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.02, 0.02, 0.34], "seg": 8}, {"t": "box", "name": "seat_board", "p": [0, 0.47, 0], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.42, 0.04, 0.42], "seg": 8}, {"t": "box", "name": "cushion", "p": [0, 0.52, 0], "c": 12868700, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.4, 0.05, 0.4], "seg": 8}, {"t": "cyl", "name": "back_L", "p": [-0.18, 0.78, -0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.64, "seg": 6}, {"t": "cyl", "name": "back_R", "p": [0.18, 0.78, -0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.64, "seg": 6}, {"t": "box", "name": "slat_1", "p": [0, 0.72, -0.18], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.34, 0.04, 0.02], "seg": 8}, {"t": "box", "name": "slat_2", "p": [0, 0.86, -0.18], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.34, 0.04, 0.02], "seg": 8}, {"t": "box", "name": "slat_3", "p": [0, 1.0, -0.18], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.34, 0.04, 0.02], "seg": 8}, {"t": "box", "name": "top_rail", "p": [0, 1.12, -0.18], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.4, 0.04, 0.03], "seg": 8}, {"t": "box", "name": "back_pad", "p": [0, 0.88, -0.15], "c": 12868700, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.32, 0.28, 0.03], "seg": 8}]}, "sofa": {"sit": true, "sitOffset": [0, 0.42, 0.06], "parts": [{"t": "box", "name": "plinth", "p": [0, 0.12, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.42, 0.1, 0.62], "seg": 8}, {"t": "box", "name": "seat", "p": [0, 0.32, 0.04], "c": 4878245, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.36, 0.16, 0.5], "seg": 8}, {"t": "box", "name": "back", "p": [0, 0.55, -0.24], "c": 4020870, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.36, 0.42, 0.14], "seg": 8}, {"t": "box", "name": "arm_L", "p": [-0.68, 0.42, 0], "c": 4020870, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.1, 0.28, 0.58], "seg": 8}, {"t": "box", "name": "arm_R", "p": [0.68, 0.42, 0], "c": 4020870, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.1, 0.28, 0.58], "seg": 8}, {"t": "box", "name": "pillow_L", "p": [-0.38, 0.48, -0.08], "c": 15259043, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.28, 0.16, 0.18], "seg": 8}, {"t": "box", "name": "pillow_R", "p": [0.38, 0.48, -0.08], "c": 15259043, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.28, 0.16, 0.18], "seg": 8}]}, "desk": {"sit": false, "parts": [{"t": "box", "name": "top", "p": [0, 0.74, 0], "c": 13943976, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.2, 0.05, 0.6], "seg": 8}, {"t": "box", "name": "leg_L", "p": [-0.52, 0.36, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.06, 0.72, 0.54], "seg": 8}, {"t": "box", "name": "leg_R", "p": [0.52, 0.36, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.06, 0.72, 0.54], "seg": 8}, {"t": "box", "name": "drawer", "p": [0.2, 0.58, 0.22], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.4, 0.12, 0.18], "seg": 8}, {"t": "cyl", "name": "knob", "p": [0.2, 0.58, 0.32], "c": 12623968, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.02, "r2": 0.02, "h": 0.03, "seg": 6}, {"t": "box", "name": "monitor", "p": [0, 0.98, -0.12], "c": 546, "e": 4482696, "rx": 0, "ry": 0, "rz": 0, "s": [0.46, 0.28, 0.04], "seg": 8}, {"t": "box", "name": "stand", "p": [0, 0.8, -0.12], "c": 819, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.1, 0.08, 0.08], "seg": 8}]}, "vending": {"kind": "vend", "parts": [{"t": "box", "name": "cabinet", "p": [0, 1.05, 0], "c": 1723048, "e": 2254540, "rx": 0, "ry": 0, "rz": 0, "s": [1.05, 2.1, 0.78], "seg": 8}, {"t": "box", "name": "bezel", "p": [0, 1.2, 0.4], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.92, 1.5, 0.04], "seg": 8}, {"t": "box", "name": "glass", "p": [0, 1.25, 0.43], "c": 16737945, "e": 16746666, "rx": 0, "ry": 0, "rz": 0, "s": [0.82, 1.32, 0.03], "seg": 8}, {"t": "box", "name": "can_1", "p": [-0.2, 1.35, 0.38], "c": 16724804, "e": 16733542, "rx": 0, "ry": 0, "rz": 0, "s": [0.12, 0.22, 0.12], "seg": 8}, {"t": "box", "name": "can_2", "p": [0.05, 1.35, 0.38], "c": 3394815, "e": 6741503, "rx": 0, "ry": 0, "rz": 0, "s": [0.12, 0.22, 0.12], "seg": 8}, {"t": "box", "name": "can_3", "p": [0.28, 1.35, 0.38], "c": 16769126, "e": 16772744, "rx": 0, "ry": 0, "rz": 0, "s": [0.12, 0.22, 0.12], "seg": 8}, {"t": "box", "name": "coin_slot", "p": [0.32, 0.55, 0.41], "c": 3549, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.1, 0.04, 0.02], "seg": 8}, {"t": "box", "name": "dispense", "p": [0, 0.22, 0.42], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.7, 0.16, 0.06], "seg": 8}, {"t": "box", "name": "logo", "p": [0, 1.95, 0.41], "c": 16777215, "e": 8969727, "rx": 0, "ry": 0, "rz": 0, "s": [0.7, 0.12, 0.02], "seg": 8}]}, "tree": {"parts": [{"t": "cyl", "name": "trunk", "p": [0, 0.7, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.12, "r2": 0.16, "h": 1.4, "seg": 7}, {"t": "sphere", "name": "crown_a", "p": [0, 1.85, 0], "c": 4033610, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.7, "seg": 8}, {"t": "sphere", "name": "crown_b", "p": [0.25, 2.05, 0.1], "c": 5021786, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.5, "seg": 8}, {"t": "sphere", "name": "crown_c", "p": [-0.2, 2.15, -0.15], "c": 3045948, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.45, "seg": 8}]}, "elevator_door": {"kind": "elev", "parts": [{"t": "box", "name": "frame", "p": [0, 1.2, 0], "c": 8952234, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.7, 2.45, 0.12], "seg": 8}, {"t": "box", "name": "leaf_L", "p": [-0.35, 1.15, 0.04], "c": 12634836, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.62, 2.2, 0.06], "seg": 8}, {"t": "box", "name": "leaf_R", "p": [0.35, 1.15, 0.04], "c": 12634836, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.62, 2.2, 0.06], "seg": 8}, {"t": "box", "name": "sill", "p": [0, 0.04, 0.08], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.5, 0.06, 0.2], "seg": 8}, {"t": "box", "name": "display", "p": [0, 2.28, 0.08], "c": 273, "e": 6750105, "rx": 0, "ry": 0, "rz": 0, "s": [0.35, 0.12, 0.04], "seg": 8}, {"t": "box", "name": "btn_up", "p": [0.78, 1.35, 0.06], "c": 3822, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.08, 0.08, 0.04], "seg": 8}, {"t": "box", "name": "btn_dn", "p": [0.78, 1.18, 0.06], "c": 3822, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.08, 0.08, 0.04], "seg": 8}]}, "railing": {"parts": [{"t": "cyl", "name": "post", "p": [0, 0.55, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.03, "r2": 0.03, "h": 1.1, "seg": 6}, {"t": "box", "name": "rail_top", "p": [0.5, 1.08, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.02, 0.04, 0.04], "seg": 8}, {"t": "box", "name": "rail_mid", "p": [0.5, 0.62, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.02, 0.025, 0.025], "seg": 8}]}, "car_kei": {"parts": [{"t": "box", "name": "body", "p": [0, 0.55, 0], "c": 16737928, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.55, 0.7, 2.9], "seg": 8}, {"t": "box", "name": "cabin", "p": [0, 1.12, -0.15], "c": 8966399, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.4, 0.5, 1.4], "seg": 8}, {"t": "cyl", "name": "wheel_fl", "p": [0.72, 0.28, 0.85], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 1.57, "r": 0.28, "r2": 0.28, "h": 0.18, "seg": 8}, {"t": "cyl", "name": "wheel_fr", "p": [-0.72, 0.28, 0.85], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 1.57, "r": 0.28, "r2": 0.28, "h": 0.18, "seg": 8}, {"t": "cyl", "name": "wheel_rl", "p": [0.72, 0.28, -0.85], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 1.57, "r": 0.28, "r2": 0.28, "h": 0.18, "seg": 8}, {"t": "cyl", "name": "wheel_rr", "p": [-0.72, 0.28, -0.85], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 1.57, "r": 0.28, "r2": 0.28, "h": 0.18, "seg": 8}, {"t": "box", "name": "head_L", "p": [0.45, 0.55, 1.46], "c": 16777164, "e": 16769160, "rx": 0, "ry": 0, "rz": 0, "s": [0.22, 0.1, 0.06], "seg": 8}, {"t": "box", "name": "head_R", "p": [-0.45, 0.55, 1.46], "c": 16777164, "e": 16769160, "rx": 0, "ry": 0, "rz": 0, "s": [0.22, 0.1, 0.06], "seg": 8}, {"t": "box", "name": "tail_L", "p": [0.45, 0.58, -1.46], "c": 16724804, "e": 16720452, "rx": 0, "ry": 0, "rz": 0, "s": [0.22, 0.08, 0.05], "seg": 8}, {"t": "box", "name": "tail_R", "p": [-0.45, 0.58, -1.46], "c": 16724804, "e": 16720452, "rx": 0, "ry": 0, "rz": 0, "s": [0.22, 0.08, 0.05], "seg": 8}, {"t": "box", "name": "mirror_L", "p": [0.82, 1.05, 0.5], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.08, 0.08, 0.14], "seg": 8}, {"t": "box", "name": "mirror_R", "p": [-0.82, 1.05, 0.5], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.08, 0.08, 0.14], "seg": 8}]}};
 </script>
@@ -70,6 +102,7 @@ const THREE = window.THREE;
 const NAMES = ['アオイ','ハル','ミオ','ケンジ','リョウ','ユイ','タクヤ','サクラ'];
 const COLS = [0xff6b9d,0x4ecdc4,0xffe66d,0x6bcb77,0xa78bfa,0xff8b94,0x54a0ff,0xfd79a8];
 const ACTS = ['walk','loop_walk','gather_center','bench','vending','basketball','sit','run','phone','wave','lean','rooftop','elevator'];
+const ACT_JA = {walk:'歩く',loop_walk:'外周を歩く',gather_center:'中央に集まる',bench:'ベンチへ',vending:'自販機へ',basketball:'バスケ',sit:'座る',run:'走る',phone:'電話',wave:'手を振る',lean:'寄りかかる',rooftop:'屋上へ',elevator:'エレベータへ'};
 const LOOP = [[120,120],[75,120],[0,120],[-75,120],[-120,120],[-120,75],[-120,0],[-120,-75],[-120,-120],[-75,-120],[0,-120],[75,-120],[120,-120],[120,-75],[120,0],[120,75]];
 const H = Math.PI / 2;
 const G1 = new THREE.BoxGeometry(1,1,1);
@@ -86,7 +119,7 @@ const npcs = [];
 const dummy = new THREE.Object3D();
 const WIN_MAX = 10000;
 let BALL, inApt = null, inTower = null, inFloor = 0, sitting = null, warpCd = 0;
-let night = false, mode = 'skyline';
+let night = false, mode = 'follow';
 let yaw = Math.PI, pitch = -0.12, dist = 22, drag = false, T = 0;
 const keys = {};
 
@@ -511,16 +544,14 @@ const spk = document.getElementById('spk');
   npcs.forEach(function(n) {
     const row = document.createElement('div'); row.className = 'slot';
     const ck = document.createElement('input'); ck.type = 'checkbox'; ck.checked = n.on;
-    ck.onchange = function() {
-      const ons = npcs.filter(function(x) { return x.on; }).length;
-      if (ck.checked && ons >= 5) { ck.checked = false; return; }
-      n.on = ck.checked;
-    };
+    ck.onchange = function() { n.on = ck.checked; };
+    ck.title = '出演させる';
     const lab = document.createElement('span'); lab.textContent = n.name;
     lab.style.color = '#' + n.col.toString(16).padStart(6, '0');
     const sel = document.createElement('select');
+    sel.title = 'この出演者の動き';
     ACTS.forEach(function(a) {
-      const o = document.createElement('option'); o.value = a; o.textContent = a; sel.appendChild(o);
+      const o = document.createElement('option'); o.value = a; o.textContent = ACT_JA[a] || a; sel.appendChild(o);
     });
     sel.onchange = function() { n.act = sel.value; n.pose = 'idle'; n.t = 0; n.g.userData.sitting = null; if (n.act === 'loop_walk') nearestWp(n); };
     n.sel = sel;
@@ -598,12 +629,14 @@ document.getElementById('say').onclick = doSay;
 
 function setMode(m) {
   mode = m;
-  document.getElementById('mF').style.background = m === 'follow' ? '#ff5a7a' : '';
-  document.getElementById('mR').style.background = m === 'free' ? '#ff5a7a' : '';
-  document.getElementById('mT').style.background = m === 'top' ? '#ff5a7a' : '';
-  document.getElementById('mS').style.background = m === 'skyline' ? '#ff5a7a' : '';
+  [['mF','follow'],['mR','free'],['mT','top'],['mS','skyline']].forEach(function(p) {
+    const b = document.getElementById(p[0]);
+    const on = m === p[1];
+    b.className = on ? 'on' : '';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
 }
-setMode('skyline');
+setMode('follow');
 document.getElementById('mF').onclick = function() { setMode('follow'); };
 document.getElementById('mR').onclick = function() { setMode('free'); };
 document.getElementById('mT').onclick = function() { setMode('top'); };
@@ -611,6 +644,8 @@ document.getElementById('mS').onclick = function() { setMode('skyline'); };
 document.getElementById('fov').oninput = function(e) { cam.fov = +e.target.value; cam.updateProjectionMatrix(); };
 document.getElementById('dn').onclick = function() {
   night = !night;
+  document.getElementById('dn').textContent = night ? '夕景に戻す' : '夜景にする';
+  document.getElementById('dn').className = night ? 'on' : '';
   scene.background = night ? SKY_NIT : SKY_EVE;
   scene.fog.color.set(night ? 0x1a1030 : 0xff8a6a);
   hemi.intensity = night ? 0.28 : 1.05;
@@ -641,29 +676,43 @@ document.getElementById('fl').onclick = function(ev) {
   const b = ev.target; if (!inTower || !b.dataset.f) return;
   goFloor(inTower, +b.dataset.f);
 };
-document.getElementById('leave').onclick = function() {
-  if (!inTower) return;
-  const t = inTower;
-  t.shell.visible = true; t.lobby.visible = false; t.skyRoom.visible = false;
-  player.position.set(t.g.position.x, 0, t.g.position.z + t.doorZ + 2.4);
-  inTower = null; inFloor = 0; showFl(false); warpCd = 1.0;
-};
+document.getElementById('leave').onclick = function() { leaveTower(); };
 
+function inForm(el) {
+  const t = el && el.tagName;
+  return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT';
+}
 window.onkeydown = function(e) {
+  if (inForm(e.target)) {
+    if (e.code === 'Enter' && e.target.id === 'line') { e.preventDefault(); doSay(); }
+    if (e.code === 'Enter' && e.target.id === 'prompt') { e.preventDefault(); parsePrompt(); }
+    if (e.code === 'Escape') e.target.blur();
+    return;
+  }
   keys[e.code] = true;
+  if (e.repeat) return;
   if (e.code === 'KeyC') setMode(mode === 'follow' ? 'free' : mode === 'free' ? 'top' : mode === 'top' ? 'skyline' : 'follow');
   if (e.code === 'KeyE') interact();
 };
 window.onkeyup = function(e) { keys[e.code] = false; };
 window.oncontextmenu = function(e) { e.preventDefault(); };
-window.onpointerdown = function(e) { if (e.button === 2) drag = true; };
+window.onpointerdown = function(e) {
+  if (e.button !== 2) return;
+  if (e.target && e.target.closest && e.target.closest('#ui') && e.target.id !== 'c') {
+    if (e.target !== document.getElementById('mini') && e.target.id !== 'hud') return;
+  }
+  drag = true;
+};
 window.onpointerup = function() { drag = false; };
 window.onpointermove = function(e) {
   if (!drag) return;
   yaw -= e.movementX * 0.005;
-  pitch = Math.max(-0.2, Math.min(1.35, pitch + e.movementY * 0.005));
+  pitch = Math.max(-1.15, Math.min(1.42, pitch + e.movementY * 0.005));
 };
-window.onwheel = function(e) { dist = Math.max(4, Math.min(90, dist + e.deltaY * 0.02)); };
+window.onwheel = function(e) {
+  if (inForm(e.target)) return;
+  dist = Math.max(3, Math.min(280, dist + e.deltaY * 0.02));
+};
 window.onresize = function() {
   cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
@@ -696,6 +745,45 @@ function nearestSeat(from, maxd) {
   return best;
 }
 
+function towerDoor(t) { return t.g.localToWorld(new THREE.Vector3(0, 1.2, t.doorZ)); }
+function nearTower(from, maxd) {
+  let best = null, bd = maxd;
+  for (let i = 0; i < TOWERS.length; i++) {
+    const d = from.distanceTo(towerDoor(TOWERS[i]));
+    if (d < bd) { bd = d; best = TOWERS[i]; }
+  }
+  return best;
+}
+function nearApt(from, maxd) {
+  let best = null, bd = maxd;
+  for (let i = 0; i < APTS.length; i++) {
+    const d = from.distanceTo(doorW(APTS[i], 5.35));
+    if (d < bd) { bd = d; best = APTS[i]; }
+  }
+  return best;
+}
+function enterTower(t) {
+  t.shell.visible = false; t.lobby.visible = true; t.skyRoom.visible = false;
+  player.position.set(t.g.position.x, 0, t.g.position.z);
+  inTower = t; inFloor = 1; showFl(true); warpCd = 0.8;
+}
+function enterApt(a) {
+  a.shell.visible = false; a.room.visible = true;
+  player.position.copy(a.g.position); inApt = a; warpCd = 0.8;
+}
+function leaveTower() {
+  if (!inTower) return;
+  const t = inTower;
+  t.shell.visible = true; t.lobby.visible = false; t.skyRoom.visible = false;
+  player.position.set(t.g.position.x, 0, t.g.position.z + t.doorZ + 2.4);
+  inTower = null; inFloor = 0; showFl(false); warpCd = 0.8;
+}
+function leaveApt() {
+  if (!inApt) return;
+  const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(inApt.g.quaternion);
+  player.position.copy(doorW(inApt, 5.35)).add(fwd.multiplyScalar(2.6));
+  inApt.shell.visible = true; inApt.room.visible = false; inApt = null; warpCd = 0.8;
+}
 function interact() {
   const pp = player.position;
   if (sitting) { stand(player); return; }
@@ -704,8 +792,16 @@ function interact() {
   if (inTower) {
     for (let i = 0; i < ELEVS.length; i++) {
       if (ELEVS[i].userData.tower !== inTower) continue;
-      if (pp.distanceTo(worldPos(ELEVS[i])) < 2.4) { showFl(true); return; }
+      if (pp.distanceTo(worldPos(ELEVS[i])) < 2.6) { showFl(true); return; }
     }
+    if (pp.distanceTo(towerDoor(inTower)) < 3.4) { leaveTower(); return; }
+  }
+  if (inApt && pp.distanceTo(doorW(inApt, 3.6)) < 2.2) { leaveApt(); return; }
+  if (!inTower && !inApt) {
+    const t = nearTower(pp, 3.2);
+    if (t) { enterTower(t); return; }
+    const a = nearApt(pp, 2.6);
+    if (a) { enterApt(a); return; }
   }
   if (BALL && pp.distanceTo(BALL.position) < 2.4) {
     BALL.userData.v.set(-Math.sin(yaw) * 8, 3.2, -Math.cos(yaw) * 8); return;
@@ -717,35 +813,40 @@ function interact() {
 function doorW(a, z) { return a.g.localToWorld(new THREE.Vector3(0, 1, z)); }
 function checkWarp(dt) {
   warpCd -= dt; if (warpCd > 0) return;
-  if (inApt) {
-    if (player.position.distanceTo(doorW(inApt, 3.6)) < 1.5) {
-      const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(inApt.g.quaternion);
-      player.position.copy(doorW(inApt, 5.35)).add(fwd.multiplyScalar(2.6));
-      inApt.shell.visible = true; inApt.room.visible = false; inApt = null; warpCd = 1.1;
-    }
-    return;
-  }
-  if (inTower) return;
-  for (let i = 0; i < TOWERS.length; i++) {
-    const t = TOWERS[i];
-    const dw = t.g.localToWorld(new THREE.Vector3(0, 1.2, t.doorZ));
-    if (player.position.distanceTo(dw) < 4.8) {
-      t.shell.visible = false; t.lobby.visible = true; t.skyRoom.visible = false;
-      player.position.set(t.g.position.x, 0, t.g.position.z);
-      inTower = t; inFloor = 1; showFl(true); warpCd = 1.1; return;
-    }
-  }
-  for (let i = 0; i < APTS.length; i++) {
-    const a = APTS[i];
-    if (player.position.distanceTo(doorW(a, 5.35)) < 2.4) {
-      a.shell.visible = false; a.room.visible = true;
-      player.position.copy(a.g.position); inApt = a; warpCd = 1.1; break;
-    }
-  }
+  if (inApt && player.position.distanceTo(doorW(inApt, 3.6)) < 1.35) { leaveApt(); return; }
+  if (inTower && inFloor === 1 && player.position.distanceTo(towerDoor(inTower)) < 1.6) { leaveTower(); return; }
 }
-function cl145(p) {
-  p.x = Math.max(-145, Math.min(145, p.x));
-  p.z = Math.max(-145, Math.min(145, p.z));
+function setHud(t) {
+  const el = document.getElementById('hud');
+  el.textContent = t || '';
+  el.style.opacity = t ? '1' : '0';
+}
+function scanHint() {
+  const pp = player.position;
+  if (sitting) { setHud('E  立つ'); return; }
+  if (inTower) {
+    for (let i = 0; i < ELEVS.length; i++) {
+      if (ELEVS[i].userData.tower === inTower && pp.distanceTo(worldPos(ELEVS[i])) < 2.6) { setHud('E  エレベータ'); return; }
+    }
+    if (inFloor === 1 && pp.distanceTo(towerDoor(inTower)) < 3.4) { setHud('E  建物を出る'); return; }
+    setHud(''); return;
+  }
+  if (inApt) {
+    if (pp.distanceTo(doorW(inApt, 3.6)) < 2.2) { setHud('E  外に出る'); return; }
+    setHud(''); return;
+  }
+  if (nearestSeat(pp, 2.8)) { setHud('E  座る'); return; }
+  if (nearTower(pp, 3.2)) { setHud('E  ロビーに入る'); return; }
+  if (nearApt(pp, 2.6)) { setHud('E  部屋に入る'); return; }
+  if (BALL && pp.distanceTo(BALL.position) < 2.4) { setHud('E  ボールを蹴る'); return; }
+  for (let i = 0; i < VENDS.length; i++) {
+    if (pp.distanceTo(worldPos(VENDS[i])) < 2.3) { setHud('E  自販機'); return; }
+  }
+  setHud('');
+}
+function clWorld(p) {
+  p.x = Math.max(-280, Math.min(280, p.x));
+  p.z = Math.max(-280, Math.min(280, p.z));
 }
 function updPlayer(dt) {
   if (sitting) {
@@ -760,6 +861,7 @@ function updPlayer(dt) {
   if (keys.KeyA || keys.ArrowLeft) ix -= 1;
   const baseY = inTower ? (inFloor === 99 ? inTower.roofY : (inFloor === 1 ? 0 : inTower.skyRoom.position.y)) : 0;
   if (ix || iz) {
+    if (mode === 'skyline') setMode('follow');
     const l = Math.hypot(ix, iz); ix /= l; iz /= l;
     const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
     const rx = Math.cos(yaw), rz = -Math.sin(yaw);
@@ -779,10 +881,10 @@ function updPlayer(dt) {
     player.position.x = Math.max(c.x - 3.8, Math.min(c.x + 3.8, player.position.x));
     player.position.z = Math.max(c.z - 3.8, Math.min(c.z + 3.8, player.position.z));
   } else if (inTower) {
-    const c = inTower.g.position, hw = inTower.w * 0.42, hd = inTower.d * 0.42;
+    const c = inTower.g.position, hw = inTower.w * 0.48, hd = inTower.d * 0.48;
     player.position.x = Math.max(c.x - hw, Math.min(c.x + hw, player.position.x));
-    player.position.z = Math.max(c.z - hd, Math.min(c.z + hd, player.position.z));
-  } else cl145(player.position);
+    player.position.z = Math.max(c.z - hd, Math.min(c.z + inTower.doorZ, player.position.z));
+  } else clWorld(player.position);
 }
 function steer(n, tx, tz, sp, dt) {
   const p = n.g.position;
@@ -792,7 +894,7 @@ function steer(n, tx, tz, sp, dt) {
   p.x += dx / d * sp * dt; p.z += dz / d * sp * dt;
   n.g.rotation.y = Math.atan2(dx, dz) + Math.PI;
   p.y = Math.abs(Math.sin(T * 11 + n.i)) * 0.05;
-  cl145(p); n.pose = 'walk';
+  clWorld(p); n.pose = 'walk';
   return false;
 }
 function updNpcs(dt) {
@@ -848,7 +950,7 @@ function updBall(dt) {
   v.y -= 18 * dt;
   BALL.position.addScaledVector(v, dt);
   if (BALL.position.y < 0.22) { BALL.position.y = 0.22; v.y *= -0.52; v.x *= 0.82; v.z *= 0.82; }
-  cl145(BALL.position);
+  clWorld(BALL.position);
 }
 function updCam() {
   const t = player.position;
@@ -897,7 +999,7 @@ function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05);
   T += dt;
-  updPlayer(dt); updNpcs(dt); updBall(dt); checkWarp(dt); updCam(); drawMini();
+  updPlayer(dt); updNpcs(dt); updBall(dt); checkWarp(dt); scanHint(); updCam(); drawMini();
   renderer.render(scene, cam);
 }
 loop();
