@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ANIME GAUNTLET LOOP STUDIO</title>
+<style>
+:root{
+  --bg:rgba(16,18,22,.88); --line:rgba(255,255,255,.14); --text:#f4f1ea; --muted:#c8c2b6;
+  --accent:#d4b483; --on:#3d6b5c; --danger:#c45c5c; --radius:10px;
+}
+html,body{margin:0;overflow:hidden;background:#12141a;color:var(--text);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Segoe UI",sans-serif}
+#c{display:block;width:100%;height:100%;touch-action:none}
+#ui{position:fixed;inset:0;pointer-events:none;z-index:5}
+#ui > *{pointer-events:auto}
+#bar{position:absolute;top:12px;left:158px;right:292px;min-height:48px;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;
+  padding:8px 12px;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);backdrop-filter:blur(10px)}
+#bar .brand{font-size:13px;font-weight:650;letter-spacing:.04em;margin-right:6px;white-space:nowrap}
+#bar .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+#cams{display:flex;gap:4px;flex-wrap:wrap}
+#mini{position:absolute;left:12px;top:12px;width:132px;height:132px;border:1px solid var(--line);border-radius:var(--radius);background:#1a2230}
+#dir{position:absolute;right:12px;top:12px;bottom:132px;width:268px;background:var(--bg);border:1px solid var(--line);
+  border-radius:var(--radius);padding:14px;overflow:auto;backdrop-filter:blur(10px)}
+#dia{position:absolute;left:158px;right:292px;bottom:12px;background:var(--bg);border:1px solid var(--line);
+  border-radius:var(--radius);padding:12px 14px;backdrop-filter:blur(10px)}
+#hint{position:absolute;left:158px;right:292px;bottom:118px;font-size:12px;color:var(--muted);text-shadow:0 1px 2px #000;pointer-events:none;line-height:1.5}
+#hud{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);font-size:15px;letter-spacing:.04em;
+  padding:8px 16px;border-radius:8px;background:rgba(16,18,22,.72);border:1px solid var(--line);opacity:0;transition:opacity .15s;pointer-events:none}
+#fl{display:none;position:absolute;left:158px;top:72px;z-index:6;background:var(--bg);border:1px solid var(--line);
+  padding:12px;border-radius:var(--radius);min-width:220px}
+button,select,input{background:#2a2f38;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 11px;font-size:13px;font-family:inherit}
+button{cursor:pointer}
+button:hover,button:focus-visible{border-color:var(--accent);outline:none}
+button.on{background:var(--on);border-color:#8fbfae}
+#dn.on{background:#2c3558;border-color:#8aa0d8}
+h3{margin:0 0 10px;font-size:12px;font-weight:650;letter-spacing:.08em;color:var(--accent)}
+.help{margin:0 0 10px;font-size:12px;color:var(--muted);line-height:1.55}
+#rec{color:var(--danger);font-size:12px;margin-left:auto;white-space:nowrap}
+.slot{display:grid;grid-template-columns:18px 64px 1fr;gap:8px;align-items:center;margin:6px 0}
+#log{height:44px;overflow:auto;opacity:.9;margin-top:6px;line-height:1.45;font-size:12px;color:var(--muted)}
+#prompt,#line{width:100%;margin:6px 0;box-sizing:border-box}
+.row{display:flex;gap:8px;align-items:center}
+.row > input{flex:1}
+label.fov{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+#fl button{display:block;width:100%;margin:4px 0;text-align:left}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+<canvas id="mini" width="140" height="140"></canvas>
+<div id="bar">
+  <span class="brand">撮影スタジオ</span>
+  <span class="sep"></span>
+  <div id="cams">
+    <button type="button" id="mF" title="キャラクターを追います（C）">追従</button>
+    <button type="button" id="mR" title="視点だけ自由に回せます">自由</button>
+    <button type="button" id="mT" title="真上からロット全体を見ます">俯瞰</button>
+    <button type="button" id="mS" title="夕景の全景です">夕景</button>
+  </div>
+  <label class="fov">画角 <input id="fov" type="range" min="30" max="90" value="52"/></label>
+  <button type="button" id="dn" title="夕景と夜景を切り替えます">夜景にする</button>
+  <span id="rec">収録中</span>
+</div>
+<div id="fl">
+  <h3>エレベータ</h3>
+  <p class="help">行きたい階を選んでください。建物を出ることもできます。</p>
+  <button type="button" data-f="1">1階　ロビー</button>
+  <button type="button" data-f="20">20階</button>
+  <button type="button" data-f="40">40階</button>
+  <button type="button" data-f="60">60階</button>
+  <button type="button" data-f="99">屋上　展望</button>
+  <button type="button" id="leave">建物を出る</button>
+</div>
+<div id="dir">
+  <h3>演出</h3>
+  <p class="help">出演者は何人でも選べます。下の欄に日本語で指示を書けます。</p>
+  <div id="casts"></div>
+  <input id="prompt" placeholder="例：全員で座る、外周を歩く、展望台へ"/>
+  <button type="button" id="goP">指示する</button>
+</div>
+<div id="dia">
+  <h3>台詞</h3>
+  <div class="row">
+    <select id="spk" aria-label="話す人"></select>
+    <input id="line" placeholder="台詞を入力して、話すを押してください"/>
+    <button type="button" id="say">話す</button>
+  </div>
+  <div id="log"></div>
+</div>
+<div id="hint">移動は WASD、走るは Shift、視点は右ドラッグ、距離はホイールです。C でカメラ、E で座る・入室・エレベータです。マップ上は自由に歩けます。入室はドアの前で E です。</div>
+<div id="hud"></div>
+</div>
+<script>
+window.KITS = {"street_lamp": {"sit": false, "parts": [{"t": "cyl", "name": "footing", "p": [0, 0.04, 0], "c": 9079444, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.22, "r2": 0.22, "h": 0.08, "seg": 10}, {"t": "cyl", "name": "base_collar", "p": [0, 0.14, 0], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.11, "r2": 0.13, "h": 0.14, "seg": 8}, {"t": "cyl", "name": "pole_lower", "p": [0, 1.85, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.065, "r2": 0.065, "h": 3.2, "seg": 8}, {"t": "cyl", "name": "mid_ring", "p": [0, 3.48, 0], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.085, "r2": 0.085, "h": 0.07, "seg": 8}, {"t": "cyl", "name": "pole_upper", "p": [0, 4.2, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.05, "r2": 0.048, "h": 1.35, "seg": 8}, {"t": "box", "name": "arm_bracket", "p": [0, 4.9, 0.02], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.14, 0.12, 0.16], "seg": 8}, {"t": "box", "name": "arm", "p": [0, 4.9, 0.55], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.055, 0.055, 1.05], "seg": 8}, {"t": "box", "name": "conduit", "p": [0.07, 4.62, 0.2], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.02, 0.45, 0.02], "seg": 8}, {"t": "box", "name": "housing", "p": [0, 4.82, 1.12], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.32, 0.13, 0.42], "seg": 8}, {"t": "box", "name": "visor", "p": [0, 4.91, 1.12], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.36, 0.03, 0.46], "seg": 8}, {"t": "box", "name": "lens", "p": [0, 4.74, 1.12], "c": 16771232, "e": 16764006, "rx": 0, "ry": 0, "rz": 0, "s": [0.24, 0.04, 0.32], "seg": 8}, {"t": "cyl", "name": "bulb", "p": [0, 4.76, 1.12], "c": 16774338, "e": 16769160, "rx": 0, "ry": 0, "rz": 0, "r": 0.05, "r2": 0.05, "h": 0.06, "seg": 8}, {"t": "cyl", "name": "bolt_0", "p": [0.13815914910043275, 0.09, 0.05841275134629757], "c": 2763312, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.02, "seg": 6}, {"t": "cyl", "name": "bolt_1", "p": [-0.05841275134629755, 0.09, 0.13815914910043275], "c": 2763312, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.02, "seg": 6}, {"t": "cyl", "name": "bolt_2", "p": [-0.13815914910043278, 0.09, -0.058412751346297545], "c": 2763312, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.02, "seg": 6}, {"t": "cyl", "name": "bolt_3", "p": [0.058412751346297594, 0.09, -0.13815914910043275], "c": 2763312, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.02, "seg": 6}]}, "chair": {"sit": true, "sitOffset": [0, 0.52, 0.02], "parts": [{"t": "cyl", "name": "leg_-1-1", "p": [-0.18, 0.23, -0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.022, "r2": 0.02, "h": 0.46, "seg": 6}, {"t": "cyl", "name": "leg_1-1", "p": [0.18, 0.23, -0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.022, "r2": 0.02, "h": 0.46, "seg": 6}, {"t": "cyl", "name": "leg_-11", "p": [-0.18, 0.23, 0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.022, "r2": 0.02, "h": 0.46, "seg": 6}, {"t": "cyl", "name": "leg_11", "p": [0.18, 0.23, 0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.022, "r2": 0.02, "h": 0.46, "seg": 6}, {"t": "box", "name": "stretcher_w", "p": [0, 0.14, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.34, 0.02, 0.02], "seg": 8}, {"t": "box", "name": "stretcher_d", "p": [0, 0.14, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.02, 0.02, 0.34], "seg": 8}, {"t": "box", "name": "seat_board", "p": [0, 0.47, 0], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.42, 0.04, 0.42], "seg": 8}, {"t": "box", "name": "cushion", "p": [0, 0.52, 0], "c": 12868700, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.4, 0.05, 0.4], "seg": 8}, {"t": "cyl", "name": "back_L", "p": [-0.18, 0.78, -0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.64, "seg": 6}, {"t": "cyl", "name": "back_R", "p": [0.18, 0.78, -0.18], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.018, "r2": 0.018, "h": 0.64, "seg": 6}, {"t": "box", "name": "slat_1", "p": [0, 0.72, -0.18], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.34, 0.04, 0.02], "seg": 8}, {"t": "box", "name": "slat_2", "p": [0, 0.86, -0.18], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.34, 0.04, 0.02], "seg": 8}, {"t": "box", "name": "slat_3", "p": [0, 1.0, -0.18], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.34, 0.04, 0.02], "seg": 8}, {"t": "box", "name": "top_rail", "p": [0, 1.12, -0.18], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.4, 0.04, 0.03], "seg": 8}, {"t": "box", "name": "back_pad", "p": [0, 0.88, -0.15], "c": 12868700, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.32, 0.28, 0.03], "seg": 8}]}, "sofa": {"sit": true, "sitOffset": [0, 0.42, 0.06], "parts": [{"t": "box", "name": "plinth", "p": [0, 0.12, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.42, 0.1, 0.62], "seg": 8}, {"t": "box", "name": "seat", "p": [0, 0.32, 0.04], "c": 4878245, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.36, 0.16, 0.5], "seg": 8}, {"t": "box", "name": "back", "p": [0, 0.55, -0.24], "c": 4020870, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.36, 0.42, 0.14], "seg": 8}, {"t": "box", "name": "arm_L", "p": [-0.68, 0.42, 0], "c": 4020870, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.1, 0.28, 0.58], "seg": 8}, {"t": "box", "name": "arm_R", "p": [0.68, 0.42, 0], "c": 4020870, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.1, 0.28, 0.58], "seg": 8}, {"t": "box", "name": "pillow_L", "p": [-0.38, 0.48, -0.08], "c": 15259043, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.28, 0.16, 0.18], "seg": 8}, {"t": "box", "name": "pillow_R", "p": [0.38, 0.48, -0.08], "c": 15259043, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.28, 0.16, 0.18], "seg": 8}]}, "desk": {"sit": false, "parts": [{"t": "box", "name": "top", "p": [0, 0.74, 0], "c": 13943976, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.2, 0.05, 0.6], "seg": 8}, {"t": "box", "name": "leg_L", "p": [-0.52, 0.36, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.06, 0.72, 0.54], "seg": 8}, {"t": "box", "name": "leg_R", "p": [0.52, 0.36, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.06, 0.72, 0.54], "seg": 8}, {"t": "box", "name": "drawer", "p": [0.2, 0.58, 0.22], "c": 9132602, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.4, 0.12, 0.18], "seg": 8}, {"t": "cyl", "name": "knob", "p": [0.2, 0.58, 0.32], "c": 12623968, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.02, "r2": 0.02, "h": 0.03, "seg": 6}, {"t": "box", "name": "monitor", "p": [0, 0.98, -0.12], "c": 546, "e": 4482696, "rx": 0, "ry": 0, "rz": 0, "s": [0.46, 0.28, 0.04], "seg": 8}, {"t": "box", "name": "stand", "p": [0, 0.8, -0.12], "c": 819, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.1, 0.08, 0.08], "seg": 8}]}, "vending": {"kind": "vend", "parts": [{"t": "box", "name": "cabinet", "p": [0, 1.05, 0], "c": 1723048, "e": 2254540, "rx": 0, "ry": 0, "rz": 0, "s": [1.05, 2.1, 0.78], "seg": 8}, {"t": "box", "name": "bezel", "p": [0, 1.2, 0.4], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.92, 1.5, 0.04], "seg": 8}, {"t": "box", "name": "glass", "p": [0, 1.25, 0.43], "c": 16737945, "e": 16746666, "rx": 0, "ry": 0, "rz": 0, "s": [0.82, 1.32, 0.03], "seg": 8}, {"t": "box", "name": "can_1", "p": [-0.2, 1.35, 0.38], "c": 16724804, "e": 16733542, "rx": 0, "ry": 0, "rz": 0, "s": [0.12, 0.22, 0.12], "seg": 8}, {"t": "box", "name": "can_2", "p": [0.05, 1.35, 0.38], "c": 3394815, "e": 6741503, "rx": 0, "ry": 0, "rz": 0, "s": [0.12, 0.22, 0.12], "seg": 8}, {"t": "box", "name": "can_3", "p": [0.28, 1.35, 0.38], "c": 16769126, "e": 16772744, "rx": 0, "ry": 0, "rz": 0, "s": [0.12, 0.22, 0.12], "seg": 8}, {"t": "box", "name": "coin_slot", "p": [0.32, 0.55, 0.41], "c": 3549, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.1, 0.04, 0.02], "seg": 8}, {"t": "box", "name": "dispense", "p": [0, 0.22, 0.42], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.7, 0.16, 0.06], "seg": 8}, {"t": "box", "name": "logo", "p": [0, 1.95, 0.41], "c": 16777215, "e": 8969727, "rx": 0, "ry": 0, "rz": 0, "s": [0.7, 0.12, 0.02], "seg": 8}]}, "tree": {"parts": [{"t": "cyl", "name": "trunk", "p": [0, 0.7, 0], "c": 6042391, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.12, "r2": 0.16, "h": 1.4, "seg": 7}, {"t": "sphere", "name": "crown_a", "p": [0, 1.85, 0], "c": 4033610, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.7, "seg": 8}, {"t": "sphere", "name": "crown_b", "p": [0.25, 2.05, 0.1], "c": 5021786, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.5, "seg": 8}, {"t": "sphere", "name": "crown_c", "p": [-0.2, 2.15, -0.15], "c": 3045948, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.45, "seg": 8}]}, "elevator_door": {"kind": "elev", "parts": [{"t": "box", "name": "frame", "p": [0, 1.2, 0], "c": 8952234, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.7, 2.45, 0.12], "seg": 8}, {"t": "box", "name": "leaf_L", "p": [-0.35, 1.15, 0.04], "c": 12634836, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.62, 2.2, 0.06], "seg": 8}, {"t": "box", "name": "leaf_R", "p": [0.35, 1.15, 0.04], "c": 12634836, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.62, 2.2, 0.06], "seg": 8}, {"t": "box", "name": "sill", "p": [0, 0.04, 0.08], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.5, 0.06, 0.2], "seg": 8}, {"t": "box", "name": "display", "p": [0, 2.28, 0.08], "c": 273, "e": 6750105, "rx": 0, "ry": 0, "rz": 0, "s": [0.35, 0.12, 0.04], "seg": 8}, {"t": "box", "name": "btn_up", "p": [0.78, 1.35, 0.06], "c": 3822, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.08, 0.08, 0.04], "seg": 8}, {"t": "box", "name": "btn_dn", "p": [0.78, 1.18, 0.06], "c": 3822, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.08, 0.08, 0.04], "seg": 8}]}, "railing": {"parts": [{"t": "cyl", "name": "post", "p": [0, 0.55, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "r": 0.03, "r2": 0.03, "h": 1.1, "seg": 6}, {"t": "box", "name": "rail_top", "p": [0.5, 1.08, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.02, 0.04, 0.04], "seg": 8}, {"t": "box", "name": "rail_mid", "p": [0.5, 0.62, 0], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.02, 0.025, 0.025], "seg": 8}]}, "car_kei": {"parts": [{"t": "box", "name": "body", "p": [0, 0.55, 0], "c": 16737928, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.55, 0.7, 2.9], "seg": 8}, {"t": "box", "name": "cabin", "p": [0, 1.12, -0.15], "c": 8966399, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [1.4, 0.5, 1.4], "seg": 8}, {"t": "cyl", "name": "wheel_fl", "p": [0.72, 0.28, 0.85], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 1.57, "r": 0.28, "r2": 0.28, "h": 0.18, "seg": 8}, {"t": "cyl", "name": "wheel_fr", "p": [-0.72, 0.28, 0.85], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 1.57, "r": 0.28, "r2": 0.28, "h": 0.18, "seg": 8}, {"t": "cyl", "name": "wheel_rl", "p": [0.72, 0.28, -0.85], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 1.57, "r": 0.28, "r2": 0.28, "h": 0.18, "seg": 8}, {"t": "cyl", "name": "wheel_rr", "p": [-0.72, 0.28, -0.85], "c": 2236972, "e": 0, "rx": 0, "ry": 0, "rz": 1.57, "r": 0.28, "r2": 0.28, "h": 0.18, "seg": 8}, {"t": "box", "name": "head_L", "p": [0.45, 0.55, 1.46], "c": 16777164, "e": 16769160, "rx": 0, "ry": 0, "rz": 0, "s": [0.22, 0.1, 0.06], "seg": 8}, {"t": "box", "name": "head_R", "p": [-0.45, 0.55, 1.46], "c": 16777164, "e": 16769160, "rx": 0, "ry": 0, "rz": 0, "s": [0.22, 0.1, 0.06], "seg": 8}, {"t": "box", "name": "tail_L", "p": [0.45, 0.58, -1.46], "c": 16724804, "e": 16720452, "rx": 0, "ry": 0, "rz": 0, "s": [0.22, 0.08, 0.05], "seg": 8}, {"t": "box", "name": "tail_R", "p": [-0.45, 0.58, -1.46], "c": 16724804, "e": 16720452, "rx": 0, "ry": 0, "rz": 0, "s": [0.22, 0.08, 0.05], "seg": 8}, {"t": "box", "name": "mirror_L", "p": [0.82, 1.05, 0.5], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.08, 0.08, 0.14], "seg": 8}, {"t": "box", "name": "mirror_R", "p": [-0.82, 1.05, 0.5], "c": 3816008, "e": 0, "rx": 0, "ry": 0, "rz": 0, "s": [0.08, 0.08, 0.14], "seg": 8}]}};
+</script>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script type="module">
+const THREE = window.THREE;
+
+const NAMES = ['アオイ','ハル','ミオ','ケンジ','リョウ','ユイ','タクヤ','サクラ'];
+const COLS = [0xff6b9d,0x4ecdc4,0xffe66d,0x6bcb77,0xa78bfa,0xff8b94,0x54a0ff,0xfd79a8];
+const ACTS = ['walk','loop_walk','gather_center','bench','vending','basketball','sit','run','phone','wave','lean','rooftop','elevator'];
+const ACT_JA = {walk:'歩く',loop_walk:'外周を歩く',gather_center:'中央に集まる',bench:'ベンチへ',vending:'自販機へ',basketball:'バスケ',sit:'座る',run:'走る',phone:'電話',wave:'手を振る',lean:'寄りかかる',rooftop:'屋上へ',elevator:'エレベータへ'};
+const LOOP = [[120,120],[75,120],[0,120],[-75,120],[-120,120],[-120,75],[-120,0],[-120,-75],[-120,-120],[-75,-120],[0,-120],[75,-120],[120,-120],[120,-75],[120,0],[120,75]];
+const H = Math.PI / 2;
+const G1 = new THREE.BoxGeometry(1,1,1);
+const GEO = new Map();
+const MC = new Map();
+const APTS = [];
+const TOWERS = [];
+const VENDS = [];
+const VTAR = [];
+const BENCH = [];
+const SEATS = [];
+const ELEVS = [];
+const npcs = [];
+const dummy = new THREE.Object3D();
+const WIN_MAX = 10000;
+let BALL, inApt = null, inTower = null, inFloor = 0, sitting = null, warpCd = 0;
+let night = false, mode = 'follow';
+let yaw = Math.PI, pitch = -0.12, dist = 22, drag = false, T = 0;
+const keys = {};
+
+const gcv = document.createElement('canvas');
+gcv.width = 5; gcv.height = 1;
+const gg = gcv.getContext('2d');
+['#2a2a2a','#666','#999','#ccc','#fff'].forEach(function(c, i) { gg.fillStyle = c; gg.fillRect(i, 0, 1, 1); });
+const GM = new THREE.CanvasTexture(gcv);
+GM.minFilter = GM.magFilter = THREE.NearestFilter;
+GM.colorSpace = THREE.NoColorSpace;
+
+function M(c, e) {
+  const k = String(c) + '_' + String(e || 0);
+  if (MC.has(k)) return MC.get(k);
+  const m = new THREE.MeshToonMaterial({ color: c, gradientMap: GM });
+  if (e) { m.emissive = new THREE.Color(e); m.emissiveIntensity = 0.9; }
+  MC.set(k, m);
+  return m;
+}
+const WIN = new THREE.MeshToonMaterial({ color: 0x89b4e0, emissive: 0xffc878, emissiveIntensity: 0.55, gradientMap: GM });
+const WIN_OFF = new THREE.MeshToonMaterial({ color: 0x1a2233, gradientMap: GM });
+
+function box(w, h, d, c, x, y, z, p, e) {
+  const o = new THREE.Mesh(G1, M(c, e));
+  o.scale.set(w, h, d); o.position.set(x, y, z);
+  o.castShadow = o.receiveShadow = true; p.add(o); return o;
+}
+function geoCyl(r, r2, h, seg) {
+  const k = 'c' + r + '_' + r2 + '_' + h + '_' + seg;
+  if (!GEO.has(k)) GEO.set(k, new THREE.CylinderGeometry(r, r2, h, seg));
+  return GEO.get(k);
+}
+function geoSph(r, seg) {
+  const k = 's' + r + '_' + seg;
+  if (!GEO.has(k)) GEO.set(k, new THREE.SphereGeometry(r, seg, Math.max(6, seg - 2)));
+  return GEO.get(k);
+}
+function mesh(geo, c, x, y, z, p, e) {
+  const o = new THREE.Mesh(geo, M(c, e));
+  o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; p.add(o); return o;
+}
+
+function buildKit(name, parent, x, y, z, rot) {
+  const kit = window.KITS[name];
+  const g = new THREE.Group();
+  g.position.set(x, y || 0, z); g.rotation.y = rot || 0;
+  kit.parts.forEach(function(p) {
+    let o = null;
+    if (p.t === 'box') o = box(p.s[0], p.s[1], p.s[2], p.c, p.p[0], p.p[1], p.p[2], g, p.e);
+    else if (p.t === 'cyl') o = mesh(geoCyl(p.r, p.r2 != null ? p.r2 : p.r, p.h, p.seg || 8), p.c, p.p[0], p.p[1], p.p[2], g, p.e);
+    else if (p.t === 'sphere') o = mesh(geoSph(p.r, p.seg || 8), p.c, p.p[0], p.p[1], p.p[2], g, p.e);
+    if (!o) return;
+    if (p.rx) o.rotation.x = p.rx;
+    if (p.ry) o.rotation.y = p.ry;
+    if (p.rz) o.rotation.z = p.rz;
+  });
+  if (kit.sit) { g.userData.kind = 'sit'; g.userData.sitOffset = kit.sitOffset || [0, 0.5, 0]; SEATS.push(g); }
+  if (kit.kind === 'vend') VENDS.push(g);
+  if (kit.kind === 'elev') { g.userData.kind = 'elev'; ELEVS.push(g); }
+  parent.add(g);
+  return g;
+}
+
+function gradTex(a) {
+  const cv = document.createElement('canvas'); cv.width = 4; cv.height = 256;
+  const g = cv.getContext('2d');
+  const lg = g.createLinearGradient(0, 0, 0, 256);
+  for (let i = 0; i < a.length; i += 2) lg.addColorStop(a[i], a[i + 1]);
+  g.fillStyle = lg; g.fillRect(0, 0, 4, 256);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true;
+  return t;
+}
+const SKY_EVE = gradTex([0, '#1a0840', 0.32, '#ff4a73', 0.55, '#ff7a4a', 0.78, '#ffc07a', 1, '#ffe8c0']);
+const SKY_NIT = gradTex([0, '#040218', 0.45, '#1c1458', 0.75, '#3a2070', 1, '#6a4088']);
+
+const scene = new THREE.Scene();
+scene.background = SKY_EVE;
+scene.fog = new THREE.Fog(0xff9a7a, 140, 520);
+const cam = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 1200);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.12;
+
+const hemi = new THREE.HemisphereLight(0xffb080, 0x2a3a48, 1.05);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffe2b0, 2.2);
+sun.position.set(60, 90, 40); sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.near = 2; sun.shadow.camera.far = 220;
+sun.shadow.camera.left = -80; sun.shadow.camera.right = 80;
+sun.shadow.camera.top = 80; sun.shadow.camera.bottom = -80;
+sun.shadow.bias = -0.0006;
+scene.add(sun); scene.add(sun.target);
+const fill = new THREE.DirectionalLight(0x6677aa, 0.32);
+fill.position.set(-40, 30, -50); scene.add(fill);
+mesh(new THREE.SphereGeometry(10, 16, 16), 0xffddaa, -110, 55, -80, scene, 0xffcc88);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), M(0x6a8a5a));
+ground.rotation.x = -H; ground.receiveShadow = true; scene.add(ground);
+
+const winLit = new THREE.InstancedMesh(G1, WIN, WIN_MAX);
+const winDark = new THREE.InstancedMesh(G1, WIN_OFF, WIN_MAX);
+winLit.frustumCulled = false; winDark.frustumCulled = false;
+scene.add(winLit); scene.add(winDark);
+let nLit = 0, nDark = 0;
+function stampWin(x, y, z, ry, lit) {
+  dummy.position.set(x, y, z); dummy.rotation.set(0, ry, 0); dummy.scale.set(1.35, 1.15, 0.08); dummy.updateMatrix();
+  if (lit && nLit < WIN_MAX) winLit.setMatrixAt(nLit++, dummy.matrix);
+  else if (!lit && nDark < WIN_MAX) winDark.setMatrixAt(nDark++, dummy.matrix);
+}
+
+function StraightRoadModule(x, z, rot) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot || 0;
+  box(75, 0.08, 10, 0x3a3a4c, 0, 0.04, 0, g);
+  box(75, 0.12, 2.5, 0xe8dcc8, 0, 0.07, 6.25, g);
+  box(75, 0.12, 2.5, 0xe8dcc8, 0, 0.07, -6.25, g);
+  box(36, 0.04, 0.16, 0xffee99, 0, 0.1, 0, g);
+  for (let i = -1; i <= 1; i++) {
+    buildKit('street_lamp', g, i * 22, 0, 5.9, 0);
+    buildKit('street_lamp', g, i * 22, 0, -5.9, Math.PI);
+  }
+  scene.add(g); return g;
+}
+function CornerRoadModule(x, z) {
+  const g = new THREE.Group(); g.position.set(x, 0, z);
+  box(18, 0.08, 18, 0x3a3a4c, 0, 0.04, 0, g);
+  for (let s = 0; s < 4; s++) {
+    const k = new THREE.Group();
+    for (let i = -2; i <= 2; i++) box(0.42, 0.1, 2.3, 0xf4f4f4, i * 0.82, 0.1, 8.1, k);
+    k.rotation.y = s * H; g.add(k);
+  }
+  buildKit('street_lamp', g, 7, 0, 7, -0.8);
+  scene.add(g); return g;
+}
+function ApartmentModule(x, z, rot, col) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot || 0;
+  const shell = new THREE.Group(); g.add(shell);
+  box(12, 9, 10, col, 0, 4.5, 0, shell);
+  box(12.6, 0.25, 10.4, 0xf2e6d8, 0, 9.05, 0, shell);
+  mesh(geoCyl(0.7, 0.7, 1.3, 8), 0x8aa, 3.2, 9.8, -2.2, shell);
+  for (let f = 0; f < 3; f++) {
+    for (let i = -1; i <= 1; i++) {
+      const w = new THREE.Mesh(G1, WIN);
+      w.scale.set(1.3, 1.25, 0.08); w.position.set(i * 3.1, 1.55 + f * 2.9, 5.06); shell.add(w);
+    }
+    if (f) box(12.4, 0.12, 1.35, 0xeee8e0, 0, f * 3, 5.55, shell);
+  }
+  box(1.7, 2.3, 0.16, 0x3a1a0a, 0, 1.15, 5.08, shell, 0x664422);
+  const room = new THREE.Group(); room.visible = false; g.add(room);
+  box(9.4, 0.18, 9.4, 0xf3e0d0, 0, 0.12, 0, room);
+  box(9.4, 2.7, 0.18, 0xffd0c0, 0, 1.45, -4.7, room);
+  box(9.4, 2.7, 0.18, 0xffd0c0, 0, 1.45, 4.7, room);
+  box(0.18, 2.7, 9.4, 0xffc8b8, -4.7, 1.45, 0, room);
+  box(0.18, 2.7, 9.4, 0xffc8b8, 4.7, 1.45, 0, room);
+  buildKit('chair', room, -2, 0, -1, 0.4);
+  buildKit('chair', room, 2, 0, 1, -0.3);
+  buildKit('desk', room, 2.2, 0, -2.4, 0);
+  box(1.5, 2.2, 0.12, 0x5c3317, 0, 1.1, 4.45, room);
+  scene.add(g); APTS.push({ g: g, shell: shell, room: room }); return g;
+}
+function ConbiniModule(x, z, rot) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot || 0;
+  box(14, 5, 10, 0x5ee0c0, 0, 2.5, 0, g);
+  box(14.6, 1.15, 0.9, 0xff3355, 0, 5.5, 5.2, g, 0xff2244);
+  box(10, 2.8, 0.08, 0xa8e8ff, 0, 2.1, 5.06, g);
+  box(2.1, 3, 0.1, 0x1a3355, 5.2, 1.55, 5.07, g);
+  for (let i = 0; i < 3; i++) {
+    const v = buildKit('vending', g, -4.2 + i * 1.5, 0, 6.2, 0);
+    const w = new THREE.Vector3(); g.updateMatrixWorld(true); v.getWorldPosition(w); VTAR.push([w.x, w.z]);
+  }
+  buildKit('car_kei', g, 5, 0, 8.5, 0.2);
+  scene.add(g); return g;
+}
+function BasketballModule(x, z) {
+  const g = new THREE.Group(); g.position.set(x, 0, z);
+  const cv = document.createElement('canvas'); cv.width = 280; cv.height = 180;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#e07030'; c.fillRect(0, 0, 280, 180);
+  c.strokeStyle = '#fff'; c.lineWidth = 3; c.strokeRect(6, 6, 268, 168);
+  c.beginPath(); c.moveTo(140, 6); c.lineTo(140, 174); c.stroke();
+  c.beginPath(); c.arc(140, 90, 22, 0, 6.3); c.stroke();
+  c.strokeRect(6, 52, 46, 76); c.strokeRect(228, 52, 46, 76);
+  const tm = new THREE.CanvasTexture(cv); tm.colorSpace = THREE.SRGBColorSpace;
+  const court = new THREE.Mesh(new THREE.PlaneGeometry(28, 18), new THREE.MeshToonMaterial({ map: tm, gradientMap: GM }));
+  court.rotation.x = -H; court.position.y = 0.06; court.receiveShadow = true; g.add(court);
+  hoop(g, -13.2, 0, H); hoop(g, 13.2, 0, -H);
+  box(28, 3.1, 0.08, 0x9aa3b0, 0, 1.55, 9.15, g);
+  box(28, 3.1, 0.08, 0x9aa3b0, 0, 1.55, -9.15, g);
+  box(0.08, 3.1, 10, 0x9aa3b0, 14.15, 1.55, 4, g);
+  box(0.08, 3.1, 10, 0x9aa3b0, -14.15, 1.55, 4, g);
+  buildKit('chair', g, 0, 0, 11.2, 0);
+  buildKit('chair', g, 2.2, 0, 11.2, 0);
+  BALL = mesh(new THREE.SphereGeometry(0.22, 12, 12), 0xff6610, 1.1, 0.22, -6.2, scene);
+  BALL.userData.v = new THREE.Vector3();
+  scene.add(g); BENCH.push([x, z + 11.2], [x + 2.2, z + 11.2]); return g;
+}
+function hoop(p, x, z, rot) {
+  const h = new THREE.Group(); h.position.set(x, 0, z); h.rotation.y = rot;
+  box(0.16, 3.05, 0.16, 0x444, 0, 1.52, 0, h);
+  box(1.85, 1.1, 0.08, 0xffffff, 0, 3.05, 0.22, h);
+  mesh(new THREE.TorusGeometry(0.24, 0.03, 8, 14), 0xff6600, 0, 2.72, 0.58, h);
+  p.add(h);
+}
+function ParkModule(x, z) {
+  const g = new THREE.Group(); g.position.set(x, 0, z);
+  box(36, 0.08, 28, 0x6fce5a, 0, 0.05, 0, g);
+  box(0.12, 2.5, 0.12, 0x8b4513, -1.6, 1.25, -4, g);
+  box(0.12, 2.5, 0.12, 0x8b4513, 1.6, 1.25, -4, g);
+  box(3.4, 0.1, 0.1, 0x8b4513, 0, 2.5, -4, g);
+  box(0.45, 0.06, 0.22, 0x5c3317, -0.7, 1.15, -4, g);
+  box(0.45, 0.06, 0.22, 0x5c3317, 0.7, 1.15, -4, g);
+  const sl = box(0.9, 0.1, 3.2, 0xff6b6b, 6, 1.05, 2, g); sl.rotation.x = -0.48;
+  box(1.3, 1.7, 1.3, 0xffd93d, 6, 0.85, 0.35, g);
+  box(4.2, 0.28, 4.2, 0xe2c56a, -7, 0.16, 4, g);
+  buildKit('chair', g, 0, 0, 10, 0);
+  buildKit('chair', g, -8, 0, 10, 0);
+  buildKit('tree', g, 10, 0, -6, 0);
+  buildKit('tree', g, -12, 0, -2, 0.4);
+  scene.add(g); BENCH.push([x, z + 10], [x - 8, z + 10]); return g;
+}
+function ParkingModule(x, z) {
+  const g = new THREE.Group(); g.position.set(x, 0, z);
+  box(26, 0.07, 18, 0x3d3d48, 0, 0.04, 0, g);
+  for (let i = -2; i <= 2; i++) box(0.08, 0.04, 16, 0xffee88, i * 4.2, 0.09, 0, g);
+  buildKit('car_kei', g, -6, 0, -3, 0);
+  buildKit('car_kei', g, -1.2, 0, -3, 0.05);
+  box(2.6, 1.05, 5.2, 0xffaa33, 6, 0.72, 1, g);
+  box(2.8, 1.6, 1.8, 0xffcc66, 6, 2.4, 1, g);
+  box(3.2, 0.08, 2.4, 0xff3355, 6, 3.25, 1, g, 0xff2244);
+  scene.add(g); return g;
+}
+
+function HighriseModule(spec) {
+  const g = new THREE.Group(); g.position.set(spec.x, 0, spec.z);
+  const shell = new THREE.Group(); g.add(shell);
+  const w = spec.w, d = spec.d, h = spec.h, v = spec.v, col = spec.c;
+  const bodyH = v === 'spire' ? h - 22 : (v === 'tiered' ? h - 16 : h - 5);
+  const floors = Math.max(10, Math.floor(bodyH / 3.5));
+  if (v === 'tiered') {
+    const h1 = bodyH * 0.42, h2 = bodyH * 0.32, h3 = bodyH * 0.26;
+    box(w, h1, d, col, 0, h1 / 2, 0, shell);
+    box(w * 0.8, h2, d * 0.8, col, 0, h1 + h2 / 2, 0, shell);
+    box(w * 0.62, h3, d * 0.62, 0xe8d5a0, 0, h1 + h2 + h3 / 2, 0, shell);
+    const rf = box(w * 0.72, 0.5, d * 0.95, 0xffe8a0, 0, bodyH + 3, 0.4, shell, 0xffcc66);
+    rf.rotation.x = -0.32;
+    box(w * 0.45, 10, 0.35, 0xffe0a0, 0, bodyH + 10, -d * 0.05, shell, 0xffdd88);
+  } else if (v === 'spire') {
+    box(w, bodyH, d, col, 0, bodyH / 2, 0, shell);
+    box(0.45, bodyH, 0.45, 0xeef6ff, w * 0.52, bodyH / 2, 0, shell, 0xccddff);
+    box(0.45, bodyH, 0.45, 0xeef6ff, -w * 0.52, bodyH / 2, 0, shell, 0xccddff);
+    mesh(new THREE.ConeGeometry(1.7, 22, 6), 0xeef6ff, 0, bodyH + 11, 0, shell, 0xffffff);
+    mesh(geoSph(1.1, 8), 0xffffff, 0, bodyH + 22.8, 0, shell, 0xffffff);
+    box(0.35, 8, 0.35, 0xffffff, 0, bodyH + 18, 0, shell, 0xffffff);
+  } else if (v === 'stripe') {
+    box(w, bodyH, d, 0xf3f3f3, 0, bodyH / 2, 0, shell);
+    box(w * 0.16, bodyH, d * 1.04, 0xc23b3b, 0, bodyH / 2, 0, shell);
+  } else if (v === 'cyl') {
+    mesh(new THREE.CylinderGeometry(w * 0.48, w * 0.5, bodyH, 12), col, 0, bodyH / 2, 0, shell);
+  } else {
+    box(w, bodyH, d, col, 0, bodyH / 2, 0, shell);
+  }
+  box(w + 1.4, 4.2, d + 1.4, 0x99bbcc, 0, 2.1, 0, shell);
+  box(w + 2.2, 0.28, d + 2.2, 0xeee, 0, 4.35, 0, shell);
+  box(3.4, 0.14, 1.5, 0x8a8a94, 0, 0.1, d / 2 + 1.3, shell);
+  box(3.4, 0.14, 1.1, 0x8a8a94, 0, 0.24, d / 2 + 1.05, shell);
+  box(2.4, 3.4, 0.22, 0x66e0ff, 0, 1.8, d / 2 + 0.85, shell, 0x44eeff);
+  mesh(geoSph(0.4, 8), 0x88ffff, 0, 4.4, d / 2 + 0.95, shell, 0x66ffff);
+  const floorH = bodyH / floors;
+  for (let f = 1; f < floors; f++) {
+    const y = 0.9 + f * floorH;
+    if (f % 2 === 0) continue;
+    for (let side = 0; side < 4; side++) {
+      const n = side % 2 === 0 ? Math.max(3, Math.floor(w / 3.1)) : Math.max(3, Math.floor(d / 3.1));
+      const faceW = side % 2 === 0 ? w : d;
+      for (let i = 0; i < n; i++) {
+        const along = ((i + 0.5) / n - 0.5) * faceW * 0.86;
+        let wx, wz, ry;
+        if (side === 0) { wx = along; wz = d / 2 + 0.07; ry = 0; }
+        else if (side === 1) { wx = w / 2 + 0.07; wz = along; ry = H; }
+        else if (side === 2) { wx = along; wz = -d / 2 - 0.07; ry = 0; }
+        else { wx = -w / 2 - 0.07; wz = along; ry = H; }
+        stampWin(spec.x + wx, y, spec.z + wz, ry, Math.random() > 0.3);
+      }
+    }
+  }
+  const roofY = bodyH;
+  box(w * 0.35, 2.4, d * 0.35, 0x778, 0, roofY + 1.2, 0, shell);
+  mesh(geoCyl(1.0, 1.0, 1.5, 8), 0x99a, w * 0.22, roofY + 0.9, -d * 0.18, shell);
+  const roof = new THREE.Group(); roof.position.y = roofY; g.add(roof);
+  buildKit('chair', roof, -1.8, 0, 2.2, 0);
+  buildKit('chair', roof, 0, 0, 2.2, 0);
+  buildKit('chair', roof, 1.8, 0, 2.2, 0);
+  for (let i = -2; i <= 2; i++) buildKit('railing', roof, i * 1.05, 0, Math.min(d, 12) * 0.42, 0);
+  const lobby = new THREE.Group(); lobby.visible = false; g.add(lobby);
+  const rw = Math.min(w - 2, 14), rd = Math.min(d - 2, 14);
+  box(rw, 0.12, rd, 0xe8dcc8, 0, 0.06, 0, lobby);
+  box(rw, 3.1, 0.18, 0xf5e6d3, 0, 1.6, -rd / 2, lobby);
+  box(rw, 3.1, 0.18, 0xf5e6d3, 0, 1.6, rd / 2, lobby);
+  box(0.18, 3.1, rd, 0xf0d8c8, -rw / 2, 1.6, 0, lobby);
+  box(0.18, 3.1, rd, 0xf0d8c8, rw / 2, 1.6, 0, lobby);
+  box(rw, 0.08, rd, 0xffe8d8, 0, 3.15, 0, lobby, 0xffddcc);
+  buildKit('sofa', lobby, 0, 0, -rd * 0.28, 0);
+  buildKit('chair', lobby, -3.2, 0, 1.4, 0.3);
+  buildKit('chair', lobby, -1.6, 0, 1.6, 0);
+  buildKit('desk', lobby, 3.1, 0, -2, 0);
+  const ev = buildKit('elevator_door', lobby, 0, 0, rd / 2 - 0.35, Math.PI);
+  const sky = new THREE.Group(); sky.visible = false; g.add(sky);
+  box(rw - 1, 0.12, rd - 1, 0xeee8e0, 0, 0.06, 0, sky);
+  box(rw - 1, 2.8, 0.15, 0xf5e6d3, 0, 1.5, -(rd - 1) / 2, sky);
+  box(0.15, 2.8, rd - 1, 0xf5e6d3, -(rw - 1) / 2, 1.5, 0, sky);
+  box(0.15, 2.8, rd - 1, 0xf5e6d3, (rw - 1) / 2, 1.5, 0, sky);
+  buildKit('desk', sky, -2.8, 0, 0, 0);
+  buildKit('chair', sky, -2.8, 0, 1.15, Math.PI);
+  buildKit('chair', sky, 2.2, 0, 1.0, 0.2);
+  buildKit('sofa', sky, 0, 0, -2.2, 0);
+  scene.add(g);
+  const tw = { g: g, shell: shell, lobby: lobby, skyRoom: sky, roofY: roofY, h: h, w: w, d: d, doorZ: d / 2 + 0.72 };
+  ev.userData.tower = tw;
+  TOWERS.push(tw);
+  return tw;
+}
+
+(function place() {
+  const R = 120, S = 75;
+  StraightRoadModule(-S, R, 0); StraightRoadModule(0, R, 0); StraightRoadModule(S, R, 0);
+  StraightRoadModule(-S, -R, 0); StraightRoadModule(0, -R, 0); StraightRoadModule(S, -R, 0);
+  StraightRoadModule(R, -S, H); StraightRoadModule(R, 0, H); StraightRoadModule(R, S, H);
+  StraightRoadModule(-R, -S, H); StraightRoadModule(-R, 0, H); StraightRoadModule(-R, S, H);
+  CornerRoadModule(R, R); CornerRoadModule(-R, R); CornerRoadModule(R, -R); CornerRoadModule(-R, -R);
+  StraightRoadModule(0, -67.5, H);
+  StraightRoadModule(67.5, 0, 0); StraightRoadModule(-67.5, 0, 0);
+  function fill(w, d, x, z) { box(w, 0.07, d, 0x3a3a4c, x, 0.035, z, scene); }
+  fill(10, 22, 0, -19); fill(22, 10, 19, 0); fill(22, 10, -19, 0);
+  fill(10, 16, 0, -112); fill(16, 10, 112, 0); fill(16, 10, -112, 0);
+  BasketballModule(0, -38);
+  ParkModule(58, -78);
+  ParkingModule(-58, -78);
+  ConbiniModule(52, -18, H);
+  ApartmentModule(-52, -18, -H, 0xff8aa0);
+  ApartmentModule(-88, -18, -H, 0xe8d5a3);
+  const towers = [
+    { x: 10, z: 72, w: 24, d: 24, h: 300, v: 'spire', c: 0x6a8aaa },
+    { x: -42, z: 82, w: 32, d: 38, h: 220, v: 'tiered', c: 0xe8d5a0 },
+    { x: 86, z: 70, w: 20, d: 20, h: 168, v: 'stripe', c: 0xf1f1f1 },
+    { x: -88, z: 68, w: 22, d: 22, h: 148, v: 'box', c: 0x4a5568 },
+    { x: -8, z: 98, w: 18, d: 18, h: 132, v: 'box', c: 0xc5a3ff },
+    { x: 62, z: 50, w: 16, d: 20, h: 96, v: 'box', c: 0x80c0d0 },
+    { x: -14, z: 50, w: 18, d: 16, h: 110, v: 'stripe', c: 0xffe0e0 },
+    { x: -70, z: 46, w: 16, d: 16, h: 84, v: 'box', c: 0x99aabb },
+    { x: 108, z: 90, w: 18, d: 18, h: 120, v: 'box', c: 0x8899bb },
+    { x: -108, z: 90, w: 16, d: 22, h: 76, v: 'box', c: 0xd4a070 },
+    { x: 28, z: 48, w: 14, d: 14, h: 64, v: 'box', c: 0x8ecae6 },
+    { x: 52, z: 108, w: 20, d: 16, h: 188, v: 'box', c: 0x334455 },
+    { x: -18, z: 108, w: 18, d: 18, h: 140, v: 'cyl', c: 0xaaccdd },
+    { x: 82, z: 108, w: 16, d: 16, h: 100, v: 'box', c: 0xffb4c8 },
+    { x: -62, z: 108, w: 14, d: 18, h: 88, v: 'box', c: 0xe8c87a },
+    { x: 102, z: 48, w: 15, d: 15, h: 72, v: 'box', c: 0x70a0c0 }
+  ];
+  towers.forEach(HighriseModule);
+  winLit.count = nLit; winDark.count = nDark;
+  winLit.instanceMatrix.needsUpdate = true; winDark.instanceMatrix.needsUpdate = true;
+  for (let i = 0; i < 28; i++) {
+    const t = i / 28, a = -0.15 + t * 1.05;
+    const x = -128 + Math.cos(a) * 38;
+    const z = -118 + Math.sin(a) * 72;
+    const seg = new THREE.Group(); seg.position.set(x, 6.2, z); seg.rotation.y = a + 0.9;
+    box(9, 0.45, 3.4, 0x2a2a33, 0, 0, 0, seg);
+    box(0.18, 0.1, 2.8, 0xffaa44, -1.2, 0.28, 0, seg, 0xff6600);
+    box(0.18, 0.1, 2.8, 0xffeecc, 1.2, 0.28, 0, seg, 0xffffcc);
+    box(0.06, 1.1, 0.06, 0x889, -1.6, 0.7, 1.4, seg);
+    box(0.06, 1.1, 0.06, 0x889, 1.6, 0.7, 1.4, seg);
+    scene.add(seg);
+  }
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(22, 200), M(0x1a2848));
+  water.rotation.x = -H; water.position.set(136, 0.02, 20); scene.add(water);
+  for (let i = 0; i < 12; i++) buildKit('tree', scene, 122, 0, -30 + i * 14, i * 0.4);
+  for (let i = 0; i < 10; i++) buildKit('tree', scene, -40 + i * 12, 0, -100, 0);
+  box(300, 2.2, 0.25, 0x4a5560, 0, 1.1, 148, scene);
+  box(300, 2.2, 0.25, 0x4a5560, 0, 1.1, -148, scene);
+  box(0.25, 2.2, 300, 0x4a5560, 148, 1.1, 0, scene);
+  box(0.25, 2.2, 300, 0x4a5560, -148, 1.1, 0, scene);
+  const bc = [0xff8aa0, 0x80e0d0, 0xffe08a, 0xc5a3ff, 0x8ecae6, 0x4a5568];
+  for (let i = 0; i < 18; i++) {
+    const a = -0.2 + i / 18 * 3.6, r = 175 + (i % 3) * 14, hh = 22 + (i % 5) * 18;
+    box(12 + i % 6, hh, 12, bc[i % 6], Math.cos(a) * r, hh / 2, Math.sin(a) * r, scene);
+  }
+  for (let i = 0; i < 8; i++) {
+    const a = 0.4 + i * 0.18, r = 210 + i * 6, hh = 40 + i * 12;
+    mesh(new THREE.ConeGeometry(18 + i * 2, hh, 5), 0x3a2a48, Math.cos(a) * r, hh * 0.35, Math.sin(a) * r, scene);
+  }
+})();
+
+function makeChar(col, name) {
+  const g = new THREE.Group();
+  mesh(new THREE.CapsuleGeometry(0.32, 0.85, 4, 10), col, 0, 0.85, 0, g);
+  mesh(geoSph(0.3, 12), 0xffe0bd, 0, 1.55, 0, g);
+  const hair = mesh(geoSph(0.32, 10), col, 0, 1.68, 0, g); hair.scale.y = 0.55;
+  box(0.09, 0.09, 0.05, 0x222, -0.1, 1.56, -0.26, g);
+  box(0.09, 0.09, 0.05, 0x222, 0.1, 1.56, -0.26, g);
+  g.userData.name = name; scene.add(g); return g;
+}
+const player = makeChar(0xff3344, '主人公');
+player.position.set(0, 0, -62);
+player.rotation.y = Math.PI;
+
+NAMES.forEach(function(nm, i) {
+  const g = makeChar(COLS[i], nm);
+  const spn = [[2, -48], [-6, -36], [10, -40], [-12, -50], [8, -30], [40, 40], [-40, 30], [30, -70]];
+  g.position.set(spn[i][0], 0, spn[i][1]);
+  npcs.push({ name: nm, col: COLS[i], g: g, on: i < 5, act: 'walk', wp: i * 2, t: 0, tgt: null, pose: 'idle', i: i });
+});
+
+const casts = document.getElementById('casts');
+const spk = document.getElementById('spk');
+(function uiInit() {
+  const o0 = document.createElement('option'); o0.value = '主人公'; o0.textContent = '主人公'; spk.appendChild(o0);
+  npcs.forEach(function(n) {
+    const row = document.createElement('div'); row.className = 'slot';
+    const ck = document.createElement('input'); ck.type = 'checkbox'; ck.checked = n.on;
+    ck.onchange = function() { n.on = ck.checked; };
+    ck.title = '出演させる';
+    const lab = document.createElement('span'); lab.textContent = n.name;
+    lab.style.color = '#' + n.col.toString(16).padStart(6, '0');
+    const sel = document.createElement('select');
+    sel.title = 'この出演者の動き';
+    ACTS.forEach(function(a) {
+      const o = document.createElement('option'); o.value = a; o.textContent = ACT_JA[a] || a; sel.appendChild(o);
+    });
+    sel.onchange = function() { n.act = sel.value; n.pose = 'idle'; n.t = 0; n.g.userData.sitting = null; if (n.act === 'loop_walk') nearestWp(n); };
+    n.sel = sel;
+    row.appendChild(ck); row.appendChild(lab); row.appendChild(sel); casts.appendChild(row);
+    const op = document.createElement('option'); op.value = n.name; op.textContent = n.name; spk.appendChild(op);
+  });
+})();
+
+function nearestWp(n) {
+  let best = 0, bd = 1e9;
+  for (let i = 0; i < LOOP.length; i++) {
+    const d = Math.hypot(n.g.position.x - LOOP[i][0], n.g.position.z - LOOP[i][1]);
+    if (d < bd) { bd = d; best = i; }
+  }
+  n.wp = best;
+}
+function parsePrompt() {
+  const t = document.getElementById('prompt').value;
+  const A = npcs.filter(function(n) { return n.on; });
+  function all(a) {
+    A.forEach(function(n) {
+      n.act = a; n.pose = 'idle'; n.g.userData.sitting = null;
+      if (n.sel) n.sel.value = a;
+      if (a === 'loop_walk') nearestWp(n);
+    });
+  }
+  if (/ループ|周回/.test(t)) return all('loop_walk');
+  if (/中央|集ま/.test(t)) return all('gather_center');
+  if (/展望|屋上|ルーフ/.test(t)) return all('rooftop');
+  if (/エレ/.test(t)) return all('elevator');
+  if (/電話|携帯/.test(t)) return all('phone');
+  if (/振/.test(t)) return all('wave');
+  if (/寄/.test(t)) return all('lean');
+  if (/バスケ/.test(t) && /ベンチ/.test(t)) {
+    const m = t.match(/(\d+)人/);
+    const k = m ? +m[1] : 2;
+    A.forEach(function(n, i) { n.act = i < k ? 'basketball' : 'bench'; if (n.sel) n.sel.value = n.act; });
+    return;
+  }
+  if (/バスケ/.test(t)) return all('basketball');
+  if (/ベンチ/.test(t)) return all('bench');
+  if (/自販/.test(t)) return all('vending');
+  if (/走/.test(t)) return all('run');
+  if (/座/.test(t)) return all('sit');
+  if (/歩/.test(t)) return all('walk');
+}
+document.getElementById('goP').onclick = parsePrompt;
+
+function bubble(obj, text) {
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#fffef5'; c.strokeStyle = '#222'; c.lineWidth = 6;
+  c.beginPath(); c.rect(10, 8, 492, 88); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(48, 96); c.lineTo(28, 122); c.lineTo(72, 96); c.fill();
+  c.fillStyle = '#222'; c.font = 'bold 28px sans-serif';
+  c.fillText(String(text).slice(0, 20), 28, 62);
+  const sm = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), fog: false, depthTest: false });
+  const sp = new THREE.Sprite(sm); sp.scale.set(4.2, 1.05, 1); sp.position.y = 2.7;
+  obj.add(sp);
+  setTimeout(function() { obj.remove(sp); sm.map.dispose(); sm.dispose(); }, 4000);
+}
+function doSay() {
+  const name = spk.value;
+  const text = document.getElementById('line').value;
+  if (!text) return;
+  const obj = name === '主人公' ? player : npcs.find(function(n) { return n.name === name; }).g;
+  bubble(obj, text);
+  const u = new SpeechSynthesisUtterance(text); u.lang = 'ja-JP';
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+  const log = document.getElementById('log');
+  log.innerHTML = log.innerHTML + '<div><b>' + name + '</b> ' + text + '</div>';
+  log.scrollTop = 9999;
+}
+document.getElementById('say').onclick = doSay;
+
+function setMode(m) {
+  mode = m;
+  [['mF','follow'],['mR','free'],['mT','top'],['mS','skyline']].forEach(function(p) {
+    const b = document.getElementById(p[0]);
+    const on = m === p[1];
+    b.className = on ? 'on' : '';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+setMode('follow');
+document.getElementById('mF').onclick = function() { setMode('follow'); };
+document.getElementById('mR').onclick = function() { setMode('free'); };
+document.getElementById('mT').onclick = function() { setMode('top'); };
+document.getElementById('mS').onclick = function() { setMode('skyline'); };
+document.getElementById('fov').oninput = function(e) { cam.fov = +e.target.value; cam.updateProjectionMatrix(); };
+document.getElementById('dn').onclick = function() {
+  night = !night;
+  document.getElementById('dn').textContent = night ? '夕景に戻す' : '夜景にする';
+  document.getElementById('dn').className = night ? 'on' : '';
+  scene.background = night ? SKY_NIT : SKY_EVE;
+  scene.fog.color.set(night ? 0x1a1030 : 0xff8a6a);
+  hemi.intensity = night ? 0.28 : 1.05;
+  sun.intensity = night ? 0.2 : 2.2;
+  fill.intensity = night ? 0.15 : 0.32;
+  WIN.emissiveIntensity = night ? 1.35 : 0.55;
+  renderer.toneMappingExposure = night ? 0.82 : 1.12;
+};
+
+function showFl(on) { document.getElementById('fl').style.display = on ? 'block' : 'none'; }
+function goFloor(t, f) {
+  sitting = null; player.userData.sitting = null; player.scale.y = 1; warpCd = 0.35;
+  t.lobby.visible = false; t.skyRoom.visible = false;
+  if (f === 99) {
+    t.shell.visible = true;
+    player.position.set(t.g.position.x, t.roofY, t.g.position.z + Math.min(3.5, t.d * 0.25));
+    inFloor = 99; return;
+  }
+  if (f === 1) {
+    t.shell.visible = false; t.lobby.visible = true;
+    player.position.set(t.g.position.x, 0, t.g.position.z); inFloor = 1; return;
+  }
+  t.shell.visible = false; t.skyRoom.visible = true;
+  t.skyRoom.position.y = Math.min(f * 3.5, t.roofY - 5);
+  player.position.set(t.g.position.x, t.skyRoom.position.y, t.g.position.z); inFloor = f;
+}
+document.getElementById('fl').onclick = function(ev) {
+  const b = ev.target; if (!inTower || !b.dataset.f) return;
+  goFloor(inTower, +b.dataset.f);
+};
+document.getElementById('leave').onclick = function() { leaveTower(); };
+
+function inForm(el) {
+  const t = el && el.tagName;
+  return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT';
+}
+window.onkeydown = function(e) {
+  if (inForm(e.target)) {
+    if (e.code === 'Enter' && e.target.id === 'line') { e.preventDefault(); doSay(); }
+    if (e.code === 'Enter' && e.target.id === 'prompt') { e.preventDefault(); parsePrompt(); }
+    if (e.code === 'Escape') e.target.blur();
+    return;
+  }
+  keys[e.code] = true;
+  if (e.repeat) return;
+  if (e.code === 'KeyC') setMode(mode === 'follow' ? 'free' : mode === 'free' ? 'top' : mode === 'top' ? 'skyline' : 'follow');
+  if (e.code === 'KeyE') interact();
+};
+window.onkeyup = function(e) { keys[e.code] = false; };
+window.oncontextmenu = function(e) { e.preventDefault(); };
+window.onpointerdown = function(e) {
+  if (e.button !== 2) return;
+  if (e.target && e.target.closest && e.target.closest('#ui') && e.target.id !== 'c') {
+    if (e.target !== document.getElementById('mini') && e.target.id !== 'hud') return;
+  }
+  drag = true;
+};
+window.onpointerup = function() { drag = false; };
+window.onpointermove = function(e) {
+  if (!drag) return;
+  yaw -= e.movementX * 0.005;
+  pitch = Math.max(-1.15, Math.min(1.42, pitch + e.movementY * 0.005));
+};
+window.onwheel = function(e) {
+  if (inForm(e.target)) return;
+  dist = Math.max(3, Math.min(280, dist + e.deltaY * 0.02));
+};
+window.onresize = function() {
+  cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+};
+
+function worldPos(o) { const v = new THREE.Vector3(); o.getWorldPosition(v); return v; }
+function sitOn(who, seat) {
+  const off = seat.userData.sitOffset || [0, 0.52, 0];
+  const lp = new THREE.Vector3(off[0], off[1], off[2]);
+  seat.updateWorldMatrix(true, false);
+  seat.localToWorld(lp);
+  who.position.copy(lp);
+  const q = new THREE.Quaternion(); seat.getWorldQuaternion(q);
+  const e = new THREE.Euler().setFromQuaternion(q);
+  who.rotation.y = e.y + Math.PI;
+  who.userData.sitting = seat;
+  who.scale.y = 0.62;
+  if (who === player) sitting = seat;
+}
+function stand(who) {
+  who.userData.sitting = null; who.scale.y = 1;
+  if (who === player) sitting = null;
+}
+function nearestSeat(from, maxd) {
+  let best = null, bd = maxd || 1.8;
+  for (let i = 0; i < SEATS.length; i++) {
+    const d = from.distanceTo(worldPos(SEATS[i]));
+    if (d < bd) { bd = d; best = SEATS[i]; }
+  }
+  return best;
+}
+
+function towerDoor(t) { return t.g.localToWorld(new THREE.Vector3(0, 1.2, t.doorZ)); }
+function nearTower(from, maxd) {
+  let best = null, bd = maxd;
+  for (let i = 0; i < TOWERS.length; i++) {
+    const d = from.distanceTo(towerDoor(TOWERS[i]));
+    if (d < bd) { bd = d; best = TOWERS[i]; }
+  }
+  return best;
+}
+function nearApt(from, maxd) {
+  let best = null, bd = maxd;
+  for (let i = 0; i < APTS.length; i++) {
+    const d = from.distanceTo(doorW(APTS[i], 5.35));
+    if (d < bd) { bd = d; best = APTS[i]; }
+  }
+  return best;
+}
+function enterTower(t) {
+  t.shell.visible = false; t.lobby.visible = true; t.skyRoom.visible = false;
+  player.position.set(t.g.position.x, 0, t.g.position.z);
+  inTower = t; inFloor = 1; showFl(true); warpCd = 0.8;
+}
+function enterApt(a) {
+  a.shell.visible = false; a.room.visible = true;
+  player.position.copy(a.g.position); inApt = a; warpCd = 0.8;
+}
+function leaveTower() {
+  if (!inTower) return;
+  const t = inTower;
+  t.shell.visible = true; t.lobby.visible = false; t.skyRoom.visible = false;
+  player.position.set(t.g.position.x, 0, t.g.position.z + t.doorZ + 2.4);
+  inTower = null; inFloor = 0; showFl(false); warpCd = 0.8;
+}
+function leaveApt() {
+  if (!inApt) return;
+  const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(inApt.g.quaternion);
+  player.position.copy(doorW(inApt, 5.35)).add(fwd.multiplyScalar(2.6));
+  inApt.shell.visible = true; inApt.room.visible = false; inApt = null; warpCd = 0.8;
+}
+function interact() {
+  const pp = player.position;
+  if (sitting) { stand(player); return; }
+  const seat = nearestSeat(pp, 2.8);
+  if (seat) { sitOn(player, seat); return; }
+  if (inTower) {
+    for (let i = 0; i < ELEVS.length; i++) {
+      if (ELEVS[i].userData.tower !== inTower) continue;
+      if (pp.distanceTo(worldPos(ELEVS[i])) < 2.6) { showFl(true); return; }
+    }
+    if (pp.distanceTo(towerDoor(inTower)) < 3.4) { leaveTower(); return; }
+  }
+  if (inApt && pp.distanceTo(doorW(inApt, 3.6)) < 2.2) { leaveApt(); return; }
+  if (!inTower && !inApt) {
+    const t = nearTower(pp, 3.2);
+    if (t) { enterTower(t); return; }
+    const a = nearApt(pp, 2.6);
+    if (a) { enterApt(a); return; }
+  }
+  if (BALL && pp.distanceTo(BALL.position) < 2.4) {
+    BALL.userData.v.set(-Math.sin(yaw) * 8, 3.2, -Math.cos(yaw) * 8); return;
+  }
+  for (let i = 0; i < VENDS.length; i++) {
+    if (pp.distanceTo(worldPos(VENDS[i])) < 2.3) { bubble(player, 'カラン'); return; }
+  }
+}
+function doorW(a, z) { return a.g.localToWorld(new THREE.Vector3(0, 1, z)); }
+function checkWarp(dt) {
+  warpCd -= dt; if (warpCd > 0) return;
+  if (inApt && player.position.distanceTo(doorW(inApt, 3.6)) < 1.35) { leaveApt(); return; }
+  if (inTower && inFloor === 1 && player.position.distanceTo(towerDoor(inTower)) < 1.6) { leaveTower(); return; }
+}
+function setHud(t) {
+  const el = document.getElementById('hud');
+  el.textContent = t || '';
+  el.style.opacity = t ? '1' : '0';
+}
+function scanHint() {
+  const pp = player.position;
+  if (sitting) { setHud('E  立つ'); return; }
+  if (inTower) {
+    for (let i = 0; i < ELEVS.length; i++) {
+      if (ELEVS[i].userData.tower === inTower && pp.distanceTo(worldPos(ELEVS[i])) < 2.6) { setHud('E  エレベータ'); return; }
+    }
+    if (inFloor === 1 && pp.distanceTo(towerDoor(inTower)) < 3.4) { setHud('E  建物を出る'); return; }
+    setHud(''); return;
+  }
+  if (inApt) {
+    if (pp.distanceTo(doorW(inApt, 3.6)) < 2.2) { setHud('E  外に出る'); return; }
+    setHud(''); return;
+  }
+  if (nearestSeat(pp, 2.8)) { setHud('E  座る'); return; }
+  if (nearTower(pp, 3.2)) { setHud('E  ロビーに入る'); return; }
+  if (nearApt(pp, 2.6)) { setHud('E  部屋に入る'); return; }
+  if (BALL && pp.distanceTo(BALL.position) < 2.4) { setHud('E  ボールを蹴る'); return; }
+  for (let i = 0; i < VENDS.length; i++) {
+    if (pp.distanceTo(worldPos(VENDS[i])) < 2.3) { setHud('E  自販機'); return; }
+  }
+  setHud('');
+}
+function clWorld(p) {
+  p.x = Math.max(-280, Math.min(280, p.x));
+  p.z = Math.max(-280, Math.min(280, p.z));
+}
+function updPlayer(dt) {
+  if (sitting) {
+    if (keys.KeyW || keys.KeyS || keys.KeyA || keys.KeyD) stand(player);
+    else { sitOn(player, sitting); return; }
+  }
+  const sp = (keys.ShiftLeft || keys.ShiftRight) ? 9.2 : 4.6;
+  let ix = 0, iz = 0;
+  if (keys.KeyW || keys.ArrowUp) iz += 1;
+  if (keys.KeyS || keys.ArrowDown) iz -= 1;
+  if (keys.KeyD || keys.ArrowRight) ix += 1;
+  if (keys.KeyA || keys.ArrowLeft) ix -= 1;
+  const baseY = inTower ? (inFloor === 99 ? inTower.roofY : (inFloor === 1 ? 0 : inTower.skyRoom.position.y)) : 0;
+  if (ix || iz) {
+    if (mode === 'skyline') setMode('follow');
+    const l = Math.hypot(ix, iz); ix /= l; iz /= l;
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+    const rx = Math.cos(yaw), rz = -Math.sin(yaw);
+    const dx = fx * iz + rx * ix, dz = fz * iz + rz * ix;
+    player.position.x += dx * sp * dt;
+    player.position.z += dz * sp * dt;
+    player.rotation.y = Math.atan2(dx, dz) + Math.PI;
+    player.position.y = baseY + Math.abs(Math.sin(T * 14)) * 0.06;
+    if (mode === 'follow') {
+      let ty = Math.atan2(-dx, -dz), dl = ty - yaw;
+      while (dl > Math.PI) dl -= 6.2832; while (dl < -Math.PI) dl += 6.2832;
+      yaw += dl * Math.min(1, dt * 3.2);
+    }
+  } else player.position.y = baseY;
+  if (inApt) {
+    const c = inApt.g.position;
+    player.position.x = Math.max(c.x - 3.8, Math.min(c.x + 3.8, player.position.x));
+    player.position.z = Math.max(c.z - 3.8, Math.min(c.z + 3.8, player.position.z));
+  } else if (inTower) {
+    const c = inTower.g.position, hw = inTower.w * 0.48, hd = inTower.d * 0.48;
+    player.position.x = Math.max(c.x - hw, Math.min(c.x + hw, player.position.x));
+    player.position.z = Math.max(c.z - hd, Math.min(c.z + inTower.doorZ, player.position.z));
+  } else clWorld(player.position);
+}
+function steer(n, tx, tz, sp, dt) {
+  const p = n.g.position;
+  const dx = tx - p.x, dz = tz - p.z;
+  const d = Math.hypot(dx, dz);
+  if (d < 0.55) return true;
+  p.x += dx / d * sp * dt; p.z += dz / d * sp * dt;
+  n.g.rotation.y = Math.atan2(dx, dz) + Math.PI;
+  p.y = Math.abs(Math.sin(T * 11 + n.i)) * 0.05;
+  clWorld(p); n.pose = 'walk';
+  return false;
+}
+function updNpcs(dt) {
+  npcs.forEach(function(n) {
+    n.g.visible = n.on;
+    if (!n.on) return;
+    const act = n.act;
+    const sp = act === 'run' ? 6.2 : 2.15;
+    n.t -= dt;
+    if (act === 'loop_walk') {
+      const wp = LOOP[n.wp % LOOP.length];
+      const dd = Math.hypot(n.g.position.x - wp[0], n.g.position.z - wp[1]);
+      if (steer(n, wp[0], wp[1], dd > 20 ? 11 : 3.4, dt)) n.wp++;
+    } else if (act === 'gather_center') steer(n, n.i * 1.8 - 6, -38, sp, dt);
+    else if (act === 'bench') {
+      const b = BENCH.length ? BENCH[n.i % BENCH.length] : [0, -28];
+      if (steer(n, b[0], b[1], sp, dt)) n.pose = 'sit';
+    } else if (act === 'vending') {
+      const v = VTAR.length ? VTAR[n.i % VTAR.length] : [52, -18];
+      steer(n, v[0], v[1], sp, dt);
+    } else if (act === 'basketball') {
+      if (!n.tgt || n.t < 0) { n.tgt = [(Math.random() - 0.5) * 16, -38 + (Math.random() - 0.5) * 10]; n.t = 2 + Math.random() * 2; }
+      steer(n, n.tgt[0], n.tgt[1], sp, dt);
+    } else if (act === 'sit') {
+      const s = SEATS[n.i % Math.max(1, SEATS.length)];
+      if (s) {
+        const w = worldPos(s);
+        if (steer(n, w.x, w.z, sp, dt)) sitOn(n.g, s);
+      } else n.pose = 'sit';
+    } else if (act === 'rooftop') {
+      const t = TOWERS[0];
+      n.g.position.set(t.g.position.x + n.i * 1.3 - 3, t.roofY, t.g.position.z + 2);
+      n.pose = 'sit';
+    } else if (act === 'elevator') {
+      const t = TOWERS[n.i % TOWERS.length];
+      steer(n, t.g.position.x, t.g.position.z + t.doorZ + 2, sp, dt);
+    } else if (act === 'phone') { n.pose = 'idle'; n.g.rotation.y += dt * 0.4; }
+    else if (act === 'wave') { n.pose = 'idle'; n.g.rotation.z = Math.sin(T * 6) * 0.15; }
+    else if (act === 'lean') {
+      const t = TOWERS[0];
+      if (steer(n, t.g.position.x + t.w * 0.5 + 1, t.g.position.z, sp, dt)) n.g.rotation.x = 0.12;
+    } else {
+      if (!n.tgt || n.t < 0) { n.tgt = [(Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200]; n.t = 3 + Math.random() * 4; }
+      steer(n, n.tgt[0], n.tgt[1], sp, dt);
+      n.g.rotation.z = 0;
+    }
+    if (!n.g.userData.sitting) n.g.scale.y = n.pose === 'sit' ? 0.62 : 1;
+  });
+}
+function updBall(dt) {
+  if (!BALL) return;
+  const v = BALL.userData.v;
+  v.y -= 18 * dt;
+  BALL.position.addScaledVector(v, dt);
+  if (BALL.position.y < 0.22) { BALL.position.y = 0.22; v.y *= -0.52; v.x *= 0.82; v.z *= 0.82; }
+  clWorld(BALL.position);
+}
+function updCam() {
+  const t = player.position;
+  sun.target.position.copy(t);
+  sun.position.set(t.x + 50, Math.max(70, t.y + 40), t.z + 30);
+  if (mode === 'skyline') {
+    scene.fog.near = 80; scene.fog.far = 520;
+    cam.position.set(-80, 70, -120);
+    cam.lookAt(12, 140, 75);
+    return;
+  }
+  if (mode === 'top') {
+    scene.fog.near = 420; scene.fog.far = 900;
+    cam.position.set(t.x, 420, t.z + 0.2); cam.lookAt(t.x, 0, t.z); return;
+  }
+  if (t.y > 15) { scene.fog.near = 50; scene.fog.far = 420; }
+  else if (night) { scene.fog.near = 50; scene.fog.far = 220; }
+  else { scene.fog.near = 140; scene.fog.far = 520; }
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  cam.position.set(t.x + dist * Math.sin(yaw) * cp, t.y + 1.35 + dist * sp, t.z + dist * Math.cos(yaw) * cp);
+  cam.lookAt(t.x, t.y + 1.2, t.z);
+}
+const MX = document.getElementById('mini');
+function drawMini() {
+  const c = MX.getContext('2d'); const W = 140, sc = W / 300;
+  c.fillStyle = '#152030'; c.fillRect(0, 0, W, W);
+  c.strokeStyle = '#667788'; c.lineWidth = 4;
+  c.strokeRect((150 - 120) * sc, (150 - 120) * sc, 240 * sc, 240 * sc);
+  c.fillStyle = '#e07030'; c.fillRect((150 - 14) * sc, (-38 + 150 - 9) * sc, 28 * sc, 18 * sc);
+  c.fillStyle = '#8ecae6';
+  TOWERS.forEach(function(tw) {
+    const s = Math.max(3, tw.w * sc * 0.5);
+    c.fillRect((tw.g.position.x + 150) * sc - s / 2, (tw.g.position.z + 150) * sc - s / 2, s, s);
+  });
+  function dot(x, z, col, r) {
+    c.fillStyle = col; c.beginPath(); c.arc((x + 150) * sc, (z + 150) * sc, r, 0, 7); c.fill();
+  }
+  dot(player.position.x, player.position.z, '#ffffff', 3.4);
+  npcs.forEach(function(n) {
+    if (!n.on) return;
+    dot(n.g.position.x, n.g.position.z, '#' + n.col.toString(16).padStart(6, '0'), 2.4);
+  });
+}
+const clock = new THREE.Clock();
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  T += dt;
+  updPlayer(dt); updNpcs(dt); updBall(dt); checkWarp(dt); scanHint(); updCam(); drawMini();
+  renderer.render(scene, cam);
+}
+loop();
+</script>
+</body>
+</html>
