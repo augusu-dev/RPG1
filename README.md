@@ -1,7 +1,7 @@
 # Anime Gauntlet Loop Studio
 
 **今すぐ遊ぶ（リンクを開くだけ）:**  
-https://smooth-horizon-e39x8nnxn.htmldrop.link/
+https://crazy-rabbit-pej8p4mxx.htmldrop.link/
 
 クローンもコマンドも不要です。ブラウザでそのままスタジオが開きます。
 
