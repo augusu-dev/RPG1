@@ -1,7 +1,7 @@
 # Anime Gauntlet Loop Studio
 
 **今すぐ遊ぶ（リンクを開くだけ）:**  
-https://ubiquitous-piroshki-f4fd81.netlify.app/
+https://wonderful-tarsier-40136e.netlify.app/
 
 クローンもコマンドも不要です。ブラウザでそのままスタジオが開きます。
 
