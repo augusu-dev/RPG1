@@ -32,6 +32,7 @@ h3{margin:0 0 6px;font-size:12px;letter-spacing:1px;color:#ffb4c8}
   <button id="mF">Follow</button>
   <button id="mR">Free</button>
   <button id="mT">Top</button>
+  <button id="mS">Skyline</button>
   <label>FOV <input id="fov" type="range" min="30" max="90" value="52"/></label>
   <span id="rec">● REC</span>
   <button id="dn">昼夜</button>
@@ -85,8 +86,8 @@ const npcs = [];
 const dummy = new THREE.Object3D();
 const WIN_MAX = 10000;
 let BALL, inApt = null, inTower = null, inFloor = 0, sitting = null, warpCd = 0;
-let night = false, mode = 'follow';
-let yaw = Math.PI, pitch = 0.22, dist = 18, drag = false, T = 0;
+let night = false, mode = 'skyline';
+let yaw = Math.PI, pitch = -0.12, dist = 22, drag = false, T = 0;
 const keys = {};
 
 const gcv = document.createElement('canvas');
@@ -436,13 +437,13 @@ function HighriseModule(spec) {
     { x: -42, z: 82, w: 32, d: 38, h: 220, v: 'tiered', c: 0xe8d5a0 },
     { x: 86, z: 70, w: 20, d: 20, h: 168, v: 'stripe', c: 0xf1f1f1 },
     { x: -88, z: 68, w: 22, d: 22, h: 148, v: 'box', c: 0x4a5568 },
-    { x: 8, z: 74, w: 18, d: 18, h: 132, v: 'box', c: 0xc5a3ff },
+    { x: -8, z: 98, w: 18, d: 18, h: 132, v: 'box', c: 0xc5a3ff },
     { x: 62, z: 50, w: 16, d: 20, h: 96, v: 'box', c: 0x80c0d0 },
     { x: -14, z: 50, w: 18, d: 16, h: 110, v: 'stripe', c: 0xffe0e0 },
     { x: -70, z: 46, w: 16, d: 16, h: 84, v: 'box', c: 0x99aabb },
     { x: 108, z: 90, w: 18, d: 18, h: 120, v: 'box', c: 0x8899bb },
     { x: -108, z: 90, w: 16, d: 22, h: 76, v: 'box', c: 0xd4a070 },
-    { x: 18, z: 48, w: 14, d: 14, h: 64, v: 'box', c: 0x8ecae6 },
+    { x: 28, z: 48, w: 14, d: 14, h: 64, v: 'box', c: 0x8ecae6 },
     { x: 52, z: 108, w: 20, d: 16, h: 188, v: 'box', c: 0x334455 },
     { x: -18, z: 108, w: 18, d: 18, h: 140, v: 'cyl', c: 0xaaccdd },
     { x: 82, z: 108, w: 16, d: 16, h: 100, v: 'box', c: 0xffb4c8 },
@@ -600,11 +601,13 @@ function setMode(m) {
   document.getElementById('mF').style.background = m === 'follow' ? '#ff5a7a' : '';
   document.getElementById('mR').style.background = m === 'free' ? '#ff5a7a' : '';
   document.getElementById('mT').style.background = m === 'top' ? '#ff5a7a' : '';
+  document.getElementById('mS').style.background = m === 'skyline' ? '#ff5a7a' : '';
 }
-setMode('follow');
+setMode('skyline');
 document.getElementById('mF').onclick = function() { setMode('follow'); };
 document.getElementById('mR').onclick = function() { setMode('free'); };
 document.getElementById('mT').onclick = function() { setMode('top'); };
+document.getElementById('mS').onclick = function() { setMode('skyline'); };
 document.getElementById('fov').oninput = function(e) { cam.fov = +e.target.value; cam.updateProjectionMatrix(); };
 document.getElementById('dn').onclick = function() {
   night = !night;
@@ -648,7 +651,7 @@ document.getElementById('leave').onclick = function() {
 
 window.onkeydown = function(e) {
   keys[e.code] = true;
-  if (e.code === 'KeyC') setMode(mode === 'follow' ? 'free' : mode === 'free' ? 'top' : 'follow');
+  if (e.code === 'KeyC') setMode(mode === 'follow' ? 'free' : mode === 'free' ? 'top' : mode === 'top' ? 'skyline' : 'follow');
   if (e.code === 'KeyE') interact();
 };
 window.onkeyup = function(e) { keys[e.code] = false; };
@@ -696,7 +699,7 @@ function nearestSeat(from, maxd) {
 function interact() {
   const pp = player.position;
   if (sitting) { stand(player); return; }
-  const seat = nearestSeat(pp, 1.7);
+  const seat = nearestSeat(pp, 2.8);
   if (seat) { sitOn(player, seat); return; }
   if (inTower) {
     for (let i = 0; i < ELEVS.length; i++) {
@@ -851,6 +854,12 @@ function updCam() {
   const t = player.position;
   sun.target.position.copy(t);
   sun.position.set(t.x + 50, Math.max(70, t.y + 40), t.z + 30);
+  if (mode === 'skyline') {
+    scene.fog.near = 80; scene.fog.far = 520;
+    cam.position.set(-55, 48, -95);
+    cam.lookAt(10, 90, 70);
+    return;
+  }
   if (mode === 'top') {
     scene.fog.near = 420; scene.fog.far = 900;
     cam.position.set(t.x, 420, t.z + 0.2); cam.lookAt(t.x, 0, t.z); return;
