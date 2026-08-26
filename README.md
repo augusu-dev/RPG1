@@ -1,6 +1,9 @@
 # Anime Gauntlet Loop Studio
 
-**ブラウザで開く（クリックするだけ）:**  
-https://cdn.jsdelivr.net/gh/augusu-dev/RPG1@cursor/anime-gauntlet-loop-studio-7460/index.html
+**今すぐ遊ぶ（リンクを開くだけ）:**  
+https://ubiquitous-piroshki-f4fd81.netlify.app/
 
-操作: WASD 移動 / 右ドラッグでカメラ / 上の Skyline が夕景の全景
+クローンもコマンドも不要です。ブラウザでそのままスタジオが開きます。
+
+WASD 移動 / Shift 走る / 右ドラッグでカメラ / C カメラ切替 / E 座る・入室  
+上の **Skyline** が夕景の全景
