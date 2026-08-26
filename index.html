@@ -254,7 +254,7 @@ function BasketballModule(x, z) {
   box(0.08, 3.1, 10, 0x9aa3b0, 14.15, 1.55, 4, g);
   box(0.08, 3.1, 10, 0x9aa3b0, -14.15, 1.55, 4, g);
   bench(g, 0, 10.6, 0); bench(g, 6, 10.6, 0);
-  BALL = mesh(new THREE.SphereGeometry(0.15, 12, 12), 0xff6610, 2, 0.15, 1, scene);
+  BALL = mesh(new THREE.SphereGeometry(0.22, 12, 12), 0xff6610, 2, 0.22, 1, scene);
   BALL.userData.v = new THREE.Vector3();
   scene.add(g);
   BENCH.push([x, z + 10.6], [x + 6, z + 10.6]);
@@ -365,13 +365,13 @@ function makeChar(col, name) {
   return g;
 }
 const player = makeChar(0xff3344, '主人公');
-player.position.set(0, 0, -22);
+player.position.set(0, 0, -8);
 player.rotation.y = Math.PI;
 yaw = Math.PI;
 
 NAMES.forEach(function(nm, i) {
   const g = makeChar(COLS[i], nm);
-  const spn = [[4, 8], [-5, 6], [12, -4], [-10, 10], [8, -12], [40, 40], [-40, 30], [30, -40]];
+  const spn = [[2, -10], [-5, 6], [12, -4], [-10, 10], [8, -12], [40, 40], [-40, 30], [30, -40]];
   g.position.set(spn[i][0], 0, spn[i][1]);
   npcs.push({ name: nm, col: COLS[i], g: g, on: i < 5, act: 'walk', wp: i * 2, t: 0, tgt: null, pose: 'idle', i: i });
 });
@@ -394,17 +394,31 @@ const spk = document.getElementById('spk');
     ACTS.forEach(function(a) {
       const o = document.createElement('option'); o.value = a; o.textContent = a; sel.appendChild(o);
     });
-    sel.onchange = function() { n.act = sel.value; n.pose = 'idle'; n.t = 0; };
+    sel.onchange = function() { n.act = sel.value; n.pose = 'idle'; n.t = 0; if (n.act === 'loop_walk') nearestWp(n); };
     n.sel = sel;
     row.appendChild(ck); row.appendChild(lab); row.appendChild(sel); casts.appendChild(row);
     const op = document.createElement('option'); op.value = n.name; op.textContent = n.name; spk.appendChild(op);
   });
 })();
 
+function nearestWp(n) {
+  let best = 0, bd = 1e9;
+  for (let i = 0; i < LOOP.length; i++) {
+    const d = Math.hypot(n.g.position.x - LOOP[i][0], n.g.position.z - LOOP[i][1]);
+    if (d < bd) { bd = d; best = i; }
+  }
+  n.wp = best;
+}
 function parsePrompt() {
   const t = document.getElementById('prompt').value;
   const A = npcs.filter(function(n) { return n.on; });
-  function all(a) { A.forEach(function(n) { n.act = a; n.pose = 'idle'; if (n.sel) n.sel.value = a; }); }
+  function all(a) {
+    A.forEach(function(n) {
+      n.act = a; n.pose = 'idle';
+      if (n.sel) n.sel.value = a;
+      if (a === 'loop_walk') nearestWp(n);
+    });
+  }
   if (/ループ|周回/.test(t)) return all('loop_walk');
   if (/中央|集ま/.test(t)) return all('gather_center');
   if (/バスケ/.test(t) && /ベンチ/.test(t)) {
@@ -431,9 +445,9 @@ function bubble(obj, text) {
   c.fillStyle = '#222'; c.font = 'bold 28px sans-serif';
   c.fillText(String(text).slice(0, 20), 28, 62);
   const sm = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), fog: false, depthTest: false });
-  const sp = new THREE.Sprite(sm); sp.scale.set(3.2, 0.8, 1); sp.position.y = 2.45;
+  const sp = new THREE.Sprite(sm); sp.scale.set(4.2, 1.05, 1); sp.position.y = 2.7;
   obj.add(sp);
-  setTimeout(function() { obj.remove(sp); sm.map.dispose(); sm.dispose(); }, 3000);
+  setTimeout(function() { obj.remove(sp); sm.map.dispose(); sm.dispose(); }, 4000);
 }
 function doSay() {
   const name = spk.value;
@@ -578,7 +592,8 @@ function updNpcs(dt) {
     n.t -= dt;
     if (act === 'loop_walk') {
       const wp = LOOP[n.wp % LOOP.length];
-      if (steer(n, wp[0], wp[1], sp, dt)) n.wp++;
+      const dd = Math.hypot(n.g.position.x - wp[0], n.g.position.z - wp[1]);
+      if (steer(n, wp[0], wp[1], dd > 20 ? 11 : 3.4, dt)) n.wp++;
     } else if (act === 'gather_center') {
       steer(n, n.i * 1.8 - 6, 12, sp, dt);
     } else if (act === 'bench') {
@@ -604,16 +619,21 @@ function updBall(dt) {
   const v = BALL.userData.v;
   v.y -= 18 * dt;
   BALL.position.addScaledVector(v, dt);
-  if (BALL.position.y < 0.15) { BALL.position.y = 0.15; v.y *= -0.52; v.x *= 0.82; v.z *= 0.82; }
+  if (BALL.position.y < 0.22) { BALL.position.y = 0.22; v.y *= -0.52; v.x *= 0.82; v.z *= 0.82; }
   cl145(BALL.position);
 }
 function updCam() {
   const t = player.position;
   sun.target.position.copy(t);
   sun.position.set(t.x + 36, 62, t.z + 24);
-  if (mode === 'top') { cam.position.set(t.x, 255, t.z + 0.2); cam.lookAt(t.x, 0, t.z); return; }
+  if (mode === 'top') {
+    scene.fog.near = 260; scene.fog.far = 480;
+    cam.position.set(t.x, 250, t.z + 0.2); cam.lookAt(t.x, 0, t.z); return;
+  }
+  scene.fog.near = night ? 40 : 70;
+  scene.fog.far = night ? 160 : 215;
   const cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const d = mode === 'free' ? dist : dist;
+  const d = dist;
   cam.position.set(t.x + d * Math.sin(yaw) * cp, t.y + 1.35 + d * sp, t.z + d * Math.cos(yaw) * cp);
   cam.lookAt(t.x, t.y + 1.2, t.z);
 }
