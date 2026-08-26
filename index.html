@@ -190,7 +190,7 @@ function ApartmentModule(x, z, rot, col) {
     box(1.15, 0.08, 1.8, 0x8a8a99, -6.55, 0.9 + f * 2.9, 2.4, shell);
     box(0.08, 2.9, 0.08, 0x8a8a99, -7.05, 2.2 + f * 2.9, 1.6, shell);
   }
-  box(1.7, 2.3, 0.12, 0x5c3317, 0, 1.15, 5.08, shell);
+  box(1.7, 2.3, 0.16, 0x3a1a0a, 0, 1.15, 5.08, shell, 0x664422);
   const room = new THREE.Group(); room.visible = false; g.add(room);
   box(9.4, 0.18, 9.4, 0xf3e0d0, 0, 0.12, 0, room);
   box(9.4, 2.7, 0.18, 0xffd0c0, 0, 1.45, -4.7, room);
@@ -371,7 +371,8 @@ yaw = Math.PI;
 
 NAMES.forEach(function(nm, i) {
   const g = makeChar(COLS[i], nm);
-  g.position.set((i % 4) * 4 - 6, 0, 24 + Math.floor(i / 4) * 3);
+  const spn = [[4, 8], [-5, 6], [12, -4], [-10, 10], [8, -12], [40, 40], [-40, 30], [30, -40]];
+  g.position.set(spn[i][0], 0, spn[i][1]);
   npcs.push({ name: nm, col: COLS[i], g: g, on: i < 5, act: 'walk', wp: i * 2, t: 0, tgt: null, pose: 'idle', i: i });
 });
 
@@ -448,7 +449,13 @@ function doSay() {
 }
 document.getElementById('say').onclick = doSay;
 
-function setMode(m) { mode = m; }
+function setMode(m) {
+  mode = m;
+  document.getElementById('mF').style.background = m === 'follow' ? '#ff5a7a' : '';
+  document.getElementById('mR').style.background = m === 'free' ? '#ff5a7a' : '';
+  document.getElementById('mT').style.background = m === 'top' ? '#ff5a7a' : '';
+}
+setMode('follow');
 document.getElementById('mF').onclick = function() { setMode('follow'); };
 document.getElementById('mR').onclick = function() { setMode('free'); };
 document.getElementById('mT').onclick = function() { setMode('top'); };
@@ -467,9 +474,7 @@ document.getElementById('dn').onclick = function() {
 
 window.onkeydown = function(e) {
   keys[e.code] = true;
-  if (e.code === 'KeyC') {
-    mode = mode === 'follow' ? 'free' : mode === 'free' ? 'top' : 'follow';
-  }
+  if (e.code === 'KeyC') setMode(mode === 'follow' ? 'free' : mode === 'free' ? 'top' : 'follow');
   if (e.code === 'KeyE') interact();
 };
 window.onkeyup = function(e) { keys[e.code] = false; };
@@ -515,7 +520,7 @@ function checkWarp(dt) {
   }
   for (let i = 0; i < APTS.length; i++) {
     const a = APTS[i];
-    if (player.position.distanceTo(doorW(a, 5.35)) < 1.7) {
+    if (player.position.distanceTo(doorW(a, 5.35)) < 2.4) {
       a.shell.visible = false; a.room.visible = true;
       player.position.copy(a.g.position); inApt = a; warpCd = 1.1; break;
     }
