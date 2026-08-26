@@ -1,7 +1,7 @@
 # Anime Gauntlet Loop Studio
 
 **今すぐ遊ぶ（リンクを開くだけ）:**  
-https://wonderful-tarsier-40136e.netlify.app/
+https://smooth-horizon-e39x8nnxn.htmldrop.link/
 
 クローンもコマンドも不要です。ブラウザでそのままスタジオが開きます。
 
