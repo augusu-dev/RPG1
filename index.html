@@ -365,7 +365,9 @@ function makeChar(col, name) {
   return g;
 }
 const player = makeChar(0xff3344, '主人公');
-player.position.set(0, 0, 32);
+player.position.set(0, 0, -22);
+player.rotation.y = Math.PI;
+yaw = Math.PI;
 
 NAMES.forEach(function(nm, i) {
   const g = makeChar(COLS[i], nm);
@@ -392,6 +394,7 @@ const spk = document.getElementById('spk');
       const o = document.createElement('option'); o.value = a; o.textContent = a; sel.appendChild(o);
     });
     sel.onchange = function() { n.act = sel.value; n.pose = 'idle'; n.t = 0; };
+    n.sel = sel;
     row.appendChild(ck); row.appendChild(lab); row.appendChild(sel); casts.appendChild(row);
     const op = document.createElement('option'); op.value = n.name; op.textContent = n.name; spk.appendChild(op);
   });
@@ -400,13 +403,13 @@ const spk = document.getElementById('spk');
 function parsePrompt() {
   const t = document.getElementById('prompt').value;
   const A = npcs.filter(function(n) { return n.on; });
-  function all(a) { A.forEach(function(n) { n.act = a; n.pose = 'idle'; }); }
+  function all(a) { A.forEach(function(n) { n.act = a; n.pose = 'idle'; if (n.sel) n.sel.value = a; }); }
   if (/ループ|周回/.test(t)) return all('loop_walk');
   if (/中央|集ま/.test(t)) return all('gather_center');
   if (/バスケ/.test(t) && /ベンチ/.test(t)) {
     const m = t.match(/(\d+)人/);
     const k = m ? +m[1] : 2;
-    A.forEach(function(n, i) { n.act = i < k ? 'basketball' : 'bench'; });
+    A.forEach(function(n, i) { n.act = i < k ? 'basketball' : 'bench'; if (n.sel) n.sel.value = n.act; });
     return;
   }
   if (/バスケ/.test(t)) return all('basketball');
@@ -603,7 +606,7 @@ function updCam() {
   const t = player.position;
   sun.target.position.copy(t);
   sun.position.set(t.x + 36, 62, t.z + 24);
-  if (mode === 'top') { cam.position.set(t.x, 92, t.z + 0.2); cam.lookAt(t.x, 0, t.z); return; }
+  if (mode === 'top') { cam.position.set(t.x, 255, t.z + 0.2); cam.lookAt(t.x, 0, t.z); return; }
   const cp = Math.cos(pitch), sp = Math.sin(pitch);
   const d = mode === 'free' ? dist : dist;
   cam.position.set(t.x + d * Math.sin(yaw) * cp, t.y + 1.35 + d * sp, t.z + d * Math.cos(yaw) * cp);
